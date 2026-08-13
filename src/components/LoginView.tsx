@@ -124,39 +124,6 @@ export const LoginView: React.FC = () => {
           </button>
         </form>
 
-        {/* 1-Click Quick Demo Login Chips */}
-        <div className="mt-8 pt-6 border-t border-slate-700/60">
-          <p className="text-[11px] text-slate-400 font-semibold mb-3 text-center uppercase tracking-wider">
-            Quick 1-Click Demo Login
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => handleQuickLogin('fortune.admin@fortune.com')}
-              className="p-2.5 bg-slate-900/90 hover:bg-slate-700/60 border border-purple-500/30 rounded-xl text-left transition-all group"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-purple-300">Admin Portal</span>
-                <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded font-mono">ADMIN</span>
-              </div>
-              <span className="text-[10px] text-slate-400 block mt-0.5 group-hover:text-slate-300">
-                fortune.admin@fortune.com
-              </span>
-            </button>
-
-            <button
-              onClick={() => handleQuickLogin('fortune.rahul@fortune.com')}
-              className="p-2.5 bg-slate-900/90 hover:bg-slate-700/60 border border-emerald-500/30 rounded-xl text-left transition-all group"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-300">Rahul (Senior Advisor)</span>
-                <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-mono">ADVISOR</span>
-              </div>
-              <span className="text-[10px] text-slate-400 block mt-0.5 group-hover:text-slate-300">
-                fortune.rahul@fortune.com
-              </span>
-            </button>
-          </div>
-        </div>
 
         {/* Password Reset Modal */}
         {resetModalOpen && (

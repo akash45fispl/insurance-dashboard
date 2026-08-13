@@ -48,10 +48,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const saved = localStorage.getItem(AUTH_STORAGE_KEY);
         if (saved) {
           setUser(JSON.parse(saved));
-        } else {
-          // Default to Rahul Sharma (Advisor) for immediate interactive demo experience
-          setUser(SEED_USERS[1]);
-          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(SEED_USERS[1]));
         }
       } catch (err) {
         console.error('Auth initialization error:', err);
@@ -67,7 +63,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const cleanEmail = email.trim().toLowerCase();
       
-      // Match from seed users or dynamic lookup
+      if (isSupabaseConfigured && supabase) {
+        if (!password) {
+          return { success: false, error: 'Password is required' };
+        }
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: password,
+        });
+        
+        if (error) {
+          return { success: false, error: error.message };
+        }
+        
+        if (data.session?.user) {
+          setUser({
+            id: data.session.user.id,
+            email: data.session.user.email || cleanEmail,
+            name: (data.session.user.email || cleanEmail).split('@')[0],
+            role: 'advisor', // or fetch from db
+          });
+          return { success: true };
+        }
+      }
+
+      // Fallback for local dev without Supabase
       const found = SEED_USERS.find((u) => u.email.toLowerCase() === cleanEmail);
       if (found) {
         setUser(found);
@@ -75,7 +95,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: true };
       }
 
-      // If user typed custom email
       const customUser: User = {
         id: `usr_${Date.now()}`,
         email: cleanEmail,
