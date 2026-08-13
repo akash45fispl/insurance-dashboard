@@ -2,9 +2,6 @@
 const isProd = process.env.NODE_ENV === 'production';
 
 const nextConfig = {
-  output: 'export',
-  basePath: isProd ? '/Insurance-Dashboard' : '',
-  assetPrefix: isProd ? '/Insurance-Dashboard/' : '',
   reactStrictMode: true,
   images: {
     unoptimized: true,
