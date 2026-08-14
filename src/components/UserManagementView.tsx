@@ -7,7 +7,6 @@ import {
   Users, 
   UserCheck, 
   UserX, 
-  ShieldAlert, 
   ShieldCheck, 
   Search, 
   UserPlus, 
@@ -18,7 +17,11 @@ import {
   Calendar, 
   Trash2, 
   RefreshCw,
-  Lock
+  Lock,
+  Database,
+  Code,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 
 interface UserManagementViewProps {
@@ -43,12 +46,15 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
   
   // Modal state for adding a user
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [sqlModalOpen, setSqlModalOpen] = useState(false);
+  
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState<Role>('advisor');
   const [newUserStatus, setNewUserStatus] = useState<UserStatus>('active');
   const [newUserPhone, setNewUserPhone] = useState('');
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [actionSuccessMsg, setActionSuccessMsg] = useState('');
 
   if (!isAdmin) {
@@ -88,14 +94,24 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
   const adminCount = users.filter((u) => u.role === 'admin').length;
   const advisorCount = users.filter((u) => u.role === 'advisor').length;
 
+  const handleManualSync = async () => {
+    setSyncing(true);
+    await onRefreshUsers();
+    setSyncing(false);
+    setActionSuccessMsg('Users re-synced from Supabase and Server database.');
+    setTimeout(() => setActionSuccessMsg(''), 4000);
+  };
+
   const handleAddUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUserEmail || !newUserName) return;
+    if (!newUserEmail) return;
     setSaving(true);
+
+    const name = newUserName || newUserEmail.split('@')[0];
 
     const createdUser: User = {
       id: `usr_${Date.now()}`,
-      name: newUserName,
+      name,
       email: newUserEmail,
       role: newUserRole,
       status: newUserStatus,
@@ -114,7 +130,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     setNewUserRole('advisor');
     setNewUserStatus('active');
 
-    setActionSuccessMsg(`User ${newUserName} has been successfully added.`);
+    setActionSuccessMsg(`User ${name} (${newUserEmail}) added & synced to Supabase.`);
     setTimeout(() => setActionSuccessMsg(''), 4000);
   };
 
@@ -141,6 +157,38 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     }
   };
 
+  const sqlSnippet = `-- Copy & Paste into Supabase SQL Editor to automatically sync Auth Users:
+CREATE TABLE IF NOT EXISTS public.users (
+  id UUID PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  name TEXT,
+  role TEXT DEFAULT 'advisor',
+  status TEXT DEFAULT 'active',
+  phone TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Public Read Policy
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read access" ON public.users FOR SELECT USING (true);
+CREATE POLICY "Allow public insert access" ON public.users FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update access" ON public.users FOR UPDATE USING (true);
+
+-- Automatic Auth Sync Trigger
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.users (id, email, name, role, status)
+  VALUES (new.id, new.email, split_part(new.email, '@', 1), 'advisor', 'active')
+  ON CONFLICT (email) DO UPDATE SET updated_at = NOW();
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();`;
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       
@@ -151,21 +199,30 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
             <span className="p-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-xl">
               <Users className="w-6 h-6" />
             </span>
-            <h1 className="text-2xl font-extrabold tracking-tight">User Management Console</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight">User Management & Supabase Sync</h1>
           </div>
           <p className="text-xs text-slate-400">
-            View active & inactive advisor accounts, assign roles, and manage system access.
+            View active & inactive advisor accounts, sync Supabase users, assign roles, and manage system access.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
-            onClick={onRefreshUsers}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 transition-all flex items-center gap-1.5 text-xs font-semibold"
-            title="Refresh Users"
+            onClick={() => setSqlModalOpen(true)}
+            className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-purple-300 rounded-xl border border-purple-500/30 transition-all flex items-center gap-1.5 text-xs font-semibold"
+            title="View Supabase SQL setup guide"
           >
-            <RefreshCw className="w-4 h-4" />
-            <span>Refresh</span>
+            <Code className="w-4 h-4 text-purple-400" />
+            <span>Supabase SQL Guide</span>
+          </button>
+
+          <button
+            onClick={handleManualSync}
+            disabled={syncing}
+            className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-blue-300 rounded-xl border border-slate-700 transition-all flex items-center gap-1.5 text-xs font-semibold"
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+            <span>{syncing ? 'Syncing...' : 'Sync Supabase'}</span>
           </button>
 
           <button
@@ -173,7 +230,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
             className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold text-xs shadow-lg shadow-purple-600/30 transition-all flex items-center gap-2"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Add New User</span>
+            <span>+ Add / Register User</span>
           </button>
         </div>
       </div>
@@ -304,10 +361,16 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
       {/* Users Table / Grid */}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         {filteredUsers.length === 0 ? (
-          <div className="p-12 text-center text-slate-500">
+          <div className="p-12 text-center text-slate-500 space-y-3">
             <Users className="w-10 h-10 mx-auto text-slate-300 mb-2" />
             <p className="font-semibold text-sm">No users match your criteria.</p>
-            <p className="text-xs text-slate-400 mt-1">Try clearing filters or search queries.</p>
+            <p className="text-xs text-slate-400">Click "+ Add / Register User" above to add any Supabase user email directly into the system.</p>
+            <button
+              onClick={() => setAddModalOpen(true)}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-sm"
+            >
+              + Add / Register Supabase User
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -445,7 +508,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
         )}
       </div>
 
-      {/* Add User Modal */}
+      {/* Add / Register User Modal */}
       {addModalOpen && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
           <div className="bg-white border border-slate-200 rounded-3xl p-6 w-full max-w-md shadow-2xl">
@@ -454,7 +517,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 <div className="p-2 bg-purple-100 text-purple-700 rounded-xl">
                   <UserPlus className="w-5 h-5" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">Add New System User</h3>
+                <h3 className="text-base font-bold text-slate-900">Add / Register Supabase User</h3>
               </div>
               <button
                 onClick={() => setAddModalOpen(false)}
@@ -466,31 +529,33 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
 
             <form onSubmit={handleAddUserSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  value={newUserName}
-                  onChange={(e) => setNewUserName(e.target.value)}
-                  placeholder="e.g. Ramesh Kumar"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs focus:ring-2 focus:ring-purple-500/20"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">User Email Address</label>
                 <input
                   type="email"
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
-                  placeholder="ramesh@fortuneinvestment.in"
+                  placeholder="advisor@fortuneinvestment.in"
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs focus:ring-2 focus:ring-purple-500/20 font-mono"
                   required
+                />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Enter the email created in Supabase Dashboard (or new advisor email).
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name (Optional)</label>
+                <input
+                  type="text"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  placeholder="e.g. Ramesh Kumar (Leave blank to use email prefix)"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number (Optional)</label>
                 <input
                   type="tel"
                   value={newUserPhone}
@@ -514,7 +579,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Initial Status</label>
                   <select
                     value={newUserStatus}
                     onChange={(e) => setNewUserStatus(e.target.value as UserStatus)}
@@ -540,10 +605,55 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                   disabled={saving}
                   className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition-all"
                 >
-                  {saving ? 'Creating...' : 'Create User'}
+                  {saving ? 'Registering...' : 'Register User'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Supabase SQL Setup Guide Modal */}
+      {sqlModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl text-slate-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-purple-500/20 text-purple-400 rounded-xl">
+                  <Database className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-bold text-white">Supabase Automatic Sync Trigger Setup</h3>
+              </div>
+              <button
+                onClick={() => setSqlModalOpen(false)}
+                className="text-slate-400 hover:text-white text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+              When users are created in the Supabase Dashboard under <b>Authentication &gt; Users</b>, Supabase stores them in <code className="bg-slate-950 px-1 py-0.5 rounded text-purple-300">auth.users</code>. Copy &amp; paste this 1-click SQL script into your <b>Supabase SQL Editor</b> so all Supabase Auth users automatically sync to your <b>User Management</b> view:
+            </p>
+
+            <div className="relative mb-4">
+              <pre className="bg-slate-950 p-4 rounded-2xl text-[11px] text-emerald-400 font-mono overflow-x-auto border border-slate-800 leading-relaxed max-h-64">
+                {sqlSnippet}
+              </pre>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+              <span className="text-[11px] text-slate-400">Run in Supabase Dashboard &gt; SQL Editor &gt; New Query</span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(sqlSnippet);
+                  alert('SQL Snippet copied to clipboard!');
+                }}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5"
+              >
+                <span>📋 Copy SQL Snippet</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
