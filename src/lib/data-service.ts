@@ -11,8 +11,8 @@ const USERS_KEY = 'fortune_users_db';
 export function isDemoProposal(p: any): boolean {
   if (!p) return true;
   const id = (p.id || '').toLowerCase();
-  const createdBy = (p.createdBy || '').toLowerCase();
-  const createdByDisplay = (p.createdByDisplay || '').toLowerCase();
+  const createdBy = (p.createdBy || p.created_by || '').toLowerCase();
+  const createdByDisplay = (p.createdByDisplay || p.created_by_display || '').toLowerCase();
   const clientAdvisor = (p.client?.advisor || '').toLowerCase();
 
   if (id === 'prop-101' || id === 'prop-102' || id === 'prop-103') return true;
@@ -28,30 +28,32 @@ export function sanitizeProposal(p: any): Proposal | null {
   if (!p.id || typeof p.id !== 'string') return null;
   if (isDemoProposal(p)) return null;
 
+  const rawClient = p.client || {};
+
   return {
     id: p.id,
     name: p.name || 'Untitled Proposal',
     client: {
-      name: p.client?.name || 'Client',
-      age: typeof p.client?.age === 'number' ? p.client.age : 35,
-      family: p.client?.family || 'Self',
-      city: p.client?.city || 'Location',
-      advisor: p.client?.advisor || 'Advisor',
-      email: p.client?.email || '',
-      phone: p.client?.phone || '',
-      members: Array.isArray(p.client?.members) ? p.client.members : [],
+      name: rawClient.name || 'Client',
+      age: typeof rawClient.age === 'number' ? rawClient.age : 35,
+      family: rawClient.family || 'Self',
+      city: rawClient.city || 'Location',
+      advisor: rawClient.advisor || 'Advisor',
+      email: rawClient.email || '',
+      phone: rawClient.phone || '',
+      members: Array.isArray(rawClient.members) ? rawClient.members : [],
     },
-    compareIds: Array.isArray(p.compareIds) ? p.compareIds : [],
-    createdBy: p.createdBy || 'advisor@fortune.com',
-    createdByDisplay: p.createdByDisplay || 'Advisor',
+    compareIds: Array.isArray(p.compareIds) ? p.compareIds : Array.isArray(p.compare_ids) ? p.compare_ids : [],
+    createdBy: p.createdBy || p.created_by || 'advisor@fortune.com',
+    createdByDisplay: p.createdByDisplay || p.created_by_display || 'Advisor',
     status: p.status || 'Created',
     date: p.date || new Date().toISOString().split('T')[0],
     category: p.category || 'health',
-    totalPremium: typeof p.totalPremium === 'number' ? p.totalPremium : 35000,
-    customNotes: p.customNotes || {},
-    createdAt: p.createdAt || new Date().toISOString(),
-    statusLog: Array.isArray(p.statusLog) ? p.statusLog : [],
-    schemeCalculations: p.schemeCalculations || undefined,
+    totalPremium: typeof p.totalPremium === 'number' ? p.totalPremium : typeof p.total_premium === 'number' ? p.total_premium : 35000,
+    customNotes: p.customNotes || p.custom_notes || {},
+    createdAt: p.createdAt || p.created_at || new Date().toISOString(),
+    statusLog: Array.isArray(p.statusLog) ? p.statusLog : Array.isArray(p.status_log) ? p.status_log : [],
+    schemeCalculations: p.schemeCalculations || p.scheme_calculations || undefined,
   };
 }
 
@@ -300,14 +302,47 @@ export async function createProposal(proposal: Omit<Proposal, 'id' | 'createdAt'
   };
 
   if (isSupabaseConfigured && supabase) {
-    const { data, error } = await supabase.from('proposals').insert(newProposal).select().single();
-    if (!error && data) {
-      const sanitized = sanitizeProposal(data);
-      if (sanitized) return sanitized;
+    try {
+      const { data, error } = await supabase.from('proposals').insert({
+        id: newProposal.id,
+        name: newProposal.name,
+        client: newProposal.client,
+        compare_ids: newProposal.compareIds,
+        compareIds: newProposal.compareIds,
+        created_by: newProposal.createdBy,
+        createdBy: newProposal.createdBy,
+        created_by_display: newProposal.createdByDisplay,
+        createdByDisplay: newProposal.createdByDisplay,
+        status: newProposal.status,
+        date: newProposal.date,
+        category: newProposal.category,
+        total_premium: newProposal.totalPremium,
+        totalPremium: newProposal.totalPremium,
+        custom_notes: newProposal.customNotes,
+        customNotes: newProposal.customNotes,
+        created_at: newProposal.createdAt,
+        createdAt: newProposal.createdAt,
+        status_log: newProposal.statusLog || [],
+        statusLog: newProposal.statusLog || [],
+      }).select().single();
+
+      if (!error && data) {
+        const sanitized = sanitizeProposal(data);
+        if (sanitized) {
+          const rawProps = getLocalItem<any[]>(PROPOSALS_KEY, []);
+          rawProps.unshift(sanitized);
+          setLocalItem(PROPOSALS_KEY, rawProps);
+          return sanitized;
+        }
+      } else if (error) {
+        console.warn('Supabase proposal insert warning:', error.message);
+      }
+    } catch (err) {
+      console.warn('Supabase proposal insert exception:', err);
     }
   }
 
-  const rawProps = getLocalItem<any[]>(PROPOSALS_KEY, SEED_PROPOSALS);
+  const rawProps = getLocalItem<any[]>(PROPOSALS_KEY, []);
   const proposals = rawProps.map(sanitizeProposal).filter((p: Proposal | null): p is Proposal => p !== null);
   proposals.unshift(newProposal);
   setLocalItem(PROPOSALS_KEY, proposals);
@@ -317,7 +352,7 @@ export async function createProposal(proposal: Omit<Proposal, 'id' | 'createdAt'
 }
 
 export async function updateProposalStatus(id: string, status: ProposalStatus, userName: string = 'Admin'): Promise<Proposal | null> {
-  const rawProps = getLocalItem<any[]>(PROPOSALS_KEY, SEED_PROPOSALS);
+  const rawProps = getLocalItem<any[]>(PROPOSALS_KEY, []);
   const proposals = rawProps.map(sanitizeProposal).filter((p: Proposal | null): p is Proposal => p !== null);
   const idx = proposals.findIndex((p) => p.id === id);
   if (idx >= 0) {
@@ -334,6 +369,18 @@ export async function updateProposalStatus(id: string, status: ProposalStatus, u
       changedBy: userName,
       changedAt: new Date().toISOString()
     });
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('proposals').update({
+          status: status,
+          status_log: proposals[idx].statusLog,
+          statusLog: proposals[idx].statusLog,
+        }).eq('id', id);
+      } catch (err) {
+        console.warn('Supabase proposal status update warning:', err);
+      }
+    }
     
     setLocalItem(PROPOSALS_KEY, proposals);
     syncProposalsToServer(proposals);
@@ -344,11 +391,14 @@ export async function updateProposalStatus(id: string, status: ProposalStatus, u
 
 export async function deleteProposal(id: string): Promise<boolean> {
   if (isSupabaseConfigured && supabase) {
-    const { error } = await supabase.from('proposals').delete().eq('id', id);
-    if (!error) return true;
+    try {
+      await supabase.from('proposals').delete().eq('id', id);
+    } catch (err) {
+      console.warn('Supabase proposal delete error:', err);
+    }
   }
 
-  const rawProps = getLocalItem<any[]>(PROPOSALS_KEY, SEED_PROPOSALS);
+  const rawProps = getLocalItem<any[]>(PROPOSALS_KEY, []);
   const proposals = rawProps.map(sanitizeProposal).filter((p: Proposal | null): p is Proposal => p !== null);
   const filtered = proposals.filter((p) => p.id !== id);
   setLocalItem(PROPOSALS_KEY, filtered);
