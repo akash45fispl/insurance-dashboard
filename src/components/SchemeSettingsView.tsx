@@ -235,50 +235,50 @@ export const SchemeSettingsView: React.FC<SchemeSettingsViewProps> = ({
               return (
                 <div
                   key={scheme.id}
-                  className="bg-white border border-slate-200 hover:border-purple-300 rounded-xl p-4 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs hover:shadow-md"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-purple-400 dark:hover:border-purple-500/60 rounded-2xl p-4 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs hover:shadow-md min-h-[96px]"
                 >
                   
-                  {/* Left Info */}
-                  <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                  {/* Left Info: Fixed Width & Clamped Height */}
+                  <div className="flex items-center gap-3.5 md:w-5/12 min-w-0">
                     <img
                       src={logoUrl}
                       alt={scheme.insurer}
-                      className="w-12 h-12 rounded-xl object-contain bg-slate-50 border border-slate-200 p-1.5 shrink-0 shadow-2xs"
+                      className="w-11 h-11 rounded-xl object-contain bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-1 shrink-0 shadow-2xs"
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                         {getCategoryBadge(scheme.category)}
-                        <span className="text-xs font-bold text-blue-600">{scheme.insurer}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">ID: {scheme.id}</span>
+                        <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400 truncate max-w-[180px]">{scheme.insurer}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono hidden sm:inline">ID: {scheme.id}</span>
                       </div>
-                      <h3 className="font-bold text-base text-slate-900 truncate">{scheme.plan}</h3>
-                      <p className="text-xs text-slate-500 italic truncate mt-0.5">"{scheme.tagline}"</p>
+                      <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate leading-snug">{scheme.plan}</h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 italic truncate mt-0.5 max-w-full">"{scheme.tagline}"</p>
                     </div>
                   </div>
 
-                  {/* Middle Specs */}
-                  <div className="grid grid-cols-3 gap-3 text-xs border-y md:border-y-0 md:border-x border-slate-100 py-2 md:py-0 md:px-5 shrink-0">
+                  {/* Middle Specs: Fixed Width & Equal Alignment */}
+                  <div className="grid grid-cols-3 gap-3 text-xs border-y md:border-y-0 md:border-x border-slate-100 dark:border-slate-800 py-2.5 md:py-0 md:px-5 md:w-4/12 shrink-0">
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-medium">Sum Insured</span>
-                      <span className="font-bold text-slate-800">{scheme.sumInsured}</span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 block font-semibold uppercase">Sum Insured</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{scheme.sumInsured}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-medium">Est. Premium</span>
-                      <span className="font-bold text-blue-700">{scheme.financials.premium}</span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 block font-semibold uppercase">Est. Premium</span>
+                      <span className="font-extrabold text-blue-700 dark:text-blue-400 truncate block">{scheme.financials.premium}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-medium">CSR %</span>
-                      <span className="font-bold text-emerald-600">{scheme.csr}</span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 block font-semibold uppercase">CSR %</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400 truncate block">{scheme.csr}</span>
                     </div>
                   </div>
 
                   {/* Right Action Controls: EDIT & DELETE */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 md:w-auto shrink-0 justify-end">
                     
                     {onSelectScheme && (
                       <button
                         onClick={() => onSelectScheme(scheme)}
-                        className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl border border-slate-200 transition-all"
+                        className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xl border border-slate-200 dark:border-slate-700 transition-all"
                         title="View Policy Detail Page"
                       >
                         Details
@@ -288,10 +288,10 @@ export const SchemeSettingsView: React.FC<SchemeSettingsViewProps> = ({
                     {onOpenCalculator && (
                       <button
                         onClick={() => onOpenCalculator(scheme)}
-                        className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl border border-emerald-300 flex items-center gap-1 transition-all"
+                        className="px-3 py-2 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-xl border border-emerald-300 dark:border-emerald-800/60 flex items-center gap-1 transition-all"
                         title="Open Interactive Premium Calculator"
                       >
-                        <Calculator className="w-3.5 h-3.5 text-emerald-600" />
+                        <Calculator className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                         <span>Calc</span>
                       </button>
                     )}
@@ -313,10 +313,10 @@ export const SchemeSettingsView: React.FC<SchemeSettingsViewProps> = ({
                           onDeleteScheme(scheme.id);
                         }
                       }}
-                      className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 flex items-center gap-1.5 transition-all"
+                      className="px-3.5 py-2 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 font-bold text-xs rounded-xl border border-rose-200 dark:border-rose-800/60 flex items-center gap-1.5 transition-all"
                       title="Delete scheme from database"
                     >
-                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                       <span>Delete</span>
                     </button>
 
