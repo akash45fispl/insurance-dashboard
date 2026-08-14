@@ -16,9 +16,9 @@ import {
   Plane,
   Calculator,
   ChevronRight,
-  Sparkles,
-  Layers
+  Sparkles
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 import { getInsurerLogoUrl } from '@/lib/insurer-logos';
 
 interface SchemeSettingsViewProps {
@@ -28,6 +28,7 @@ interface SchemeSettingsViewProps {
   onDeleteScheme: (schemeId: string) => void;
   onOpenCalculator?: (scheme: Scheme) => void;
   onSelectScheme?: (scheme: Scheme) => void;
+  isAdmin?: boolean;
 }
 
 export const SchemeSettingsView: React.FC<SchemeSettingsViewProps> = ({
@@ -37,10 +38,28 @@ export const SchemeSettingsView: React.FC<SchemeSettingsViewProps> = ({
   onDeleteScheme,
   onOpenCalculator,
   onSelectScheme,
+  isAdmin: propIsAdmin,
 }) => {
+  const { isAdmin: authIsAdmin } = useAuth();
+  const isAdmin = propIsAdmin ?? authIsAdmin;
+
   const [selectedCategory, setSelectedCategory] = useState<InsuranceCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedInsurer, setSelectedInsurer] = useState<string>('all');
+
+  if (!isAdmin) {
+    return (
+      <div className="bg-white rounded-3xl p-10 border border-slate-200 text-center max-w-xl mx-auto shadow-lg space-y-4 my-12">
+        <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto">
+          <Settings className="w-7 h-7" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900">Admin Access Required</h2>
+        <p className="text-xs text-slate-500 leading-relaxed">
+          Only the Admin (<code className="bg-slate-100 text-purple-700 px-1.5 py-0.5 rounded font-mono font-bold">Admin@fortuneinvestment.in</code>) is authorized to view or edit Scheme Settings, or create/delete insurance schemes.
+        </p>
+      </div>
+    );
+  }
 
   // Insurers list
   const insurers = Array.from(new Set(schemes.map((s) => s.insurer)));

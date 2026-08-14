@@ -13,54 +13,15 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ success: boolean; message: string }>;
   switchRole: (role: Role) => void;
   isAdmin: boolean;
-  verifyAdminPassword: (password: string) => boolean;
-  changeAdminPassword: (currentPassword: string, newPassword: string) => { success: boolean; error?: string };
-  resetAdminPasswordToDefault: () => void;
 }
 
 const AUTH_STORAGE_KEY = 'fortune_active_user_session';
-const ADMIN_PASSWORD_STORAGE_KEY = 'fortune_admin_switch_password';
-const DEFAULT_ADMIN_PASSWORD = 'Evolve@26';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Ensure default admin password is set if not already present
-    if (typeof window !== 'undefined' && !localStorage.getItem(ADMIN_PASSWORD_STORAGE_KEY)) {
-      localStorage.setItem(ADMIN_PASSWORD_STORAGE_KEY, DEFAULT_ADMIN_PASSWORD);
-    }
-  }, []);
-
-  const getAdminPassword = (): string => {
-    if (typeof window === 'undefined') return DEFAULT_ADMIN_PASSWORD;
-    return localStorage.getItem(ADMIN_PASSWORD_STORAGE_KEY) || DEFAULT_ADMIN_PASSWORD;
-  };
-
-  const verifyAdminPassword = (password: string): boolean => {
-    const current = getAdminPassword();
-    return password === current;
-  };
-
-  const changeAdminPassword = (currentPassword: string, newPassword: string): { success: boolean; error?: string } => {
-    if (!verifyAdminPassword(currentPassword)) {
-      return { success: false, error: 'Current admin password is incorrect.' };
-    }
-    if (!newPassword || newPassword.trim().length < 4) {
-      return { success: false, error: 'New password must be at least 4 characters.' };
-    }
-    localStorage.setItem(ADMIN_PASSWORD_STORAGE_KEY, newPassword.trim());
-    return { success: true };
-  };
-
-  const resetAdminPasswordToDefault = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(ADMIN_PASSWORD_STORAGE_KEY, DEFAULT_ADMIN_PASSWORD);
-    }
-  };
 
   useEffect(() => {
     // Check saved session in localStorage or Supabase
@@ -76,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 id: data.session.user.id,
                 email,
                 name: email.split('@')[0],
-                role: 'advisor',
+                role: email.toLowerCase().includes('admin') ? 'admin' : 'advisor',
               }
             );
             setLoading(false);
@@ -101,7 +62,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password?: string) => {
     try {
       const cleanEmail = email.trim().toLowerCase();
-      
+
+      // Check specific Admin credentials: Admin@fortuneinvestment.in / Evolve@26
+      if (cleanEmail === 'admin@fortuneinvestment.in') {
+        if (password && password !== 'Evolve@26') {
+          return { success: false, error: 'Incorrect Admin Password. Password is Evolve@26' };
+        }
+        const adminUser: User = {
+          id: 'usr_admin_fortune',
+          email: 'Admin@fortuneinvestment.in',
+          name: 'Fortune Admin',
+          role: 'admin',
+        };
+        setUser(adminUser);
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(adminUser));
+        return { success: true };
+      }
+
       if (isSupabaseConfigured && supabase) {
         if (!password) {
           return { success: false, error: 'Password is required' };
@@ -120,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: data.session.user.id,
             email: data.session.user.email || cleanEmail,
             name: (data.session.user.email || cleanEmail).split('@')[0],
-            role: 'advisor', // or fetch from db
+            role: cleanEmail.includes('admin') ? 'admin' : 'advisor',
           });
           return { success: true };
         }
@@ -184,9 +161,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetPassword,
         switchRole,
         isAdmin: user?.role === 'admin',
-        verifyAdminPassword,
-        changeAdminPassword,
-        resetAdminPasswordToDefault,
       }}
     >
       {children}

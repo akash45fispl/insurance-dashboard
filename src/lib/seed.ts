@@ -3,7 +3,7 @@ import { Scheme, User, Proposal, AdvisorNote } from './types';
 export const SEED_USERS: User[] = [
   {
     id: 'usr_admin',
-    email: 'fortune.admin@fortune.com',
+    email: 'Admin@fortuneinvestment.in',
     name: 'Fortune Admin',
     role: 'admin',
     createdAt: '2026-01-01T00:00:00Z',

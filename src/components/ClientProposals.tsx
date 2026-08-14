@@ -20,6 +20,8 @@ import {
   Briefcase
 } from 'lucide-react';
 
+import { useAuth } from '@/lib/auth-context';
+
 interface ClientProposalsProps {
   proposals: Proposal[];
   onViewProposal: (proposal: Proposal) => void;
@@ -37,6 +39,7 @@ export const ClientProposals: React.FC<ClientProposalsProps> = ({
   onDeleteProposal,
   isAdmin,
 }) => {
+  const { user } = useAuth();
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,6 +49,11 @@ export const ClientProposals: React.FC<ClientProposalsProps> = ({
   const advisors = Array.from(new Set(proposals.map((p) => p.createdByDisplay || p.createdBy)));
 
   const filteredProposals = proposals.filter((p) => {
+    // Proposal Privacy Control: Admin sees all proposals; Advisor sees ONLY their own proposals
+    const matchesUserPrivacy = isAdmin || !user || 
+      p.createdBy.toLowerCase() === user.email.toLowerCase() ||
+      (p.createdByDisplay && p.createdByDisplay.toLowerCase() === user.name.toLowerCase());
+
     const matchesCat = categoryFilter === 'all' || p.category === categoryFilter;
     const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
     const matchesAdvisor = advisorFilter === 'all' || (p.createdByDisplay || p.createdBy) === advisorFilter;
@@ -53,7 +61,8 @@ export const ClientProposals: React.FC<ClientProposalsProps> = ({
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.client.city.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCat && matchesStatus && matchesAdvisor && matchesSearch;
+
+    return matchesUserPrivacy && matchesCat && matchesStatus && matchesAdvisor && matchesSearch;
   });
 
   const getStatusBadge = (status: ProposalStatus) => {
