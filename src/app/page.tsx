@@ -15,11 +15,16 @@ import { NewProposalModal } from '@/components/NewProposalModal';
 import { EditSchemeModal } from '@/components/EditSchemeModal';
 import { SchemePremiumCalculator } from '@/components/SchemePremiumCalculator';
 import { SchemeSettingsView } from '@/components/SchemeSettingsView';
-import { Scheme, Proposal, AnalyticsMetrics, ProposalStatus, CalculatedPremiumDetails } from '@/lib/types';
+import { UserManagementView } from '@/components/UserManagementView';
+import { Scheme, Proposal, AnalyticsMetrics, ProposalStatus, CalculatedPremiumDetails, User, UserStatus } from '@/lib/types';
 import { 
   getSchemes, 
   getProposals, 
   getAnalyticsMetrics, 
+  getUsers,
+  saveUser,
+  updateUserStatus,
+  deleteUser,
   saveScheme,
   deleteScheme,
   createProposal, 
@@ -35,9 +40,10 @@ export default function HomePage() {
   const [schemes, setSchemes] = useState<Scheme[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsMetrics | null>(null);
+  const [usersList, setUsersList] = useState<User[]>([]);
 
   // Active View mode
-  const [activeView, setActiveView] = useState<'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'detail' | 'proposal_doc' | 'settings'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'detail' | 'proposal_doc' | 'settings' | 'users'>('dashboard');
 
   // Selected entities for deep view
   const [selectedScheme, setSelectedScheme] = useState<Scheme | null>(null);
@@ -83,10 +89,12 @@ export default function HomePage() {
         const sList = await getSchemes();
         const pList = await getProposals();
         const aMetrics = await getAnalyticsMetrics();
+        const uList = await getUsers();
         if (isMounted) {
           setSchemes(sList);
           setProposals(pList);
           setAnalytics(aMetrics);
+          setUsersList(uList);
         }
       } catch (err) {
         console.error('Error fetching synced cloud data:', err);
@@ -112,6 +120,27 @@ export default function HomePage() {
       window.removeEventListener('focus', handleFocus);
     };
   }, [user]);
+
+  // User Management Handlers
+  const handleRefreshUsers = async () => {
+    const uList = await getUsers();
+    setUsersList(uList);
+  };
+
+  const handleUpdateUserStatus = async (userId: string, status: UserStatus) => {
+    await updateUserStatus(userId, status);
+    await handleRefreshUsers();
+  };
+
+  const handleSaveUser = async (userToSave: User) => {
+    await saveUser(userToSave);
+    await handleRefreshUsers();
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    await deleteUser(userId);
+    await handleRefreshUsers();
+  };
 
   // Auth Protection guard
   if (loading) {
@@ -423,6 +452,19 @@ export default function HomePage() {
               onDeleteScheme={handleDeleteScheme}
               onOpenCalculator={handleOpenCalculator}
               onSelectScheme={handleSelectScheme}
+            />
+          </div>
+        )}
+
+        {/* VIEW 7: USER MANAGEMENT */}
+        {activeView === 'users' && (
+          <div className="animate-in fade-in duration-200">
+            <UserManagementView
+              users={usersList}
+              onRefreshUsers={handleRefreshUsers}
+              onUpdateUserStatus={handleUpdateUserStatus}
+              onSaveUser={handleSaveUser}
+              onDeleteUser={handleDeleteUser}
             />
           </div>
         )}

@@ -19,12 +19,13 @@ import {
   Sparkles,
   Check,
   Zap,
-  Star
+  Star,
+  UserCheck
 } from 'lucide-react';
 
 interface NavbarProps {
-  activeView: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings';
-  setActiveView: (view: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings') => void;
+  activeView: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings' | 'users';
+  setActiveView: (view: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings' | 'users') => void;
   compareCount: number;
   isDarkMode?: boolean;
   onToggleDarkMode?: () => void;
@@ -56,7 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   if (!user) return null;
 
   interface NavItem {
-    id: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings';
+    id: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings' | 'users';
     label: string;
     icon: React.ElementType;
     desc: string;
@@ -71,7 +72,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'compare', label: 'Compare Schemes', icon: Scale, badge: compareCount > 0 ? compareCount : undefined, desc: 'Side-by-side spec matrix & cappings', color: 'from-purple-500 to-indigo-600' },
     { id: 'analytics', label: 'Analytics Overview', icon: BarChart3, desc: 'Conversion metrics & portfolio volumes', color: 'from-cyan-500 to-blue-600' },
     { id: 'reports', label: 'Advisor Reports', icon: Users, desc: 'Advisor performance & client logs', color: 'from-amber-500 to-orange-600' },
-    ...(isAdmin ? [{ id: 'settings' as const, label: 'Scheme Settings', icon: Settings, tag: 'Admin Only', desc: 'Create, edit or delete insurance schemes', color: 'from-rose-500 to-pink-600' }] : []),
+    ...(isAdmin ? [
+      { id: 'settings' as const, label: 'Scheme Settings', icon: Settings, tag: 'Admin Only', desc: 'Create, edit or delete insurance schemes', color: 'from-rose-500 to-pink-600' },
+      { id: 'users' as const, label: 'User Management', icon: UserCheck, tag: 'Admin Only', desc: 'Manage active/inactive users & roles', color: 'from-purple-500 to-indigo-600' }
+    ] : []),
   ];
 
   const handleSelectView = (view: typeof navItems[number]['id']) => {

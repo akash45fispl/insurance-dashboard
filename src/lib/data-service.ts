@@ -394,6 +394,36 @@ export async function getUsers(): Promise<User[]> {
   return getLocalItem<User[]>(USERS_KEY, SEED_USERS);
 }
 
+export async function saveUser(user: User): Promise<User> {
+  const users = getLocalItem<User[]>(USERS_KEY, SEED_USERS);
+  const idx = users.findIndex((u) => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase());
+  if (idx >= 0) {
+    users[idx] = { ...users[idx], ...user };
+  } else {
+    users.unshift(user);
+  }
+  setLocalItem(USERS_KEY, users);
+  return user;
+}
+
+export async function updateUserStatus(userId: string, status: 'active' | 'inactive'): Promise<User | null> {
+  const users = getLocalItem<User[]>(USERS_KEY, SEED_USERS);
+  const idx = users.findIndex((u) => u.id === userId);
+  if (idx >= 0) {
+    users[idx].status = status;
+    setLocalItem(USERS_KEY, users);
+    return users[idx];
+  }
+  return null;
+}
+
+export async function deleteUser(userId: string): Promise<boolean> {
+  const users = getLocalItem<User[]>(USERS_KEY, SEED_USERS);
+  const filtered = users.filter((u) => u.id !== userId);
+  setLocalItem(USERS_KEY, filtered);
+  return true;
+}
+
 // ---------------- ANALYTICS DATA ----------------
 export async function getAnalyticsMetrics(): Promise<AnalyticsMetrics> {
   const proposals = await getProposals();

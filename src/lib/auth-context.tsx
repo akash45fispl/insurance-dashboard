@@ -103,9 +103,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      // Fallback for local dev without Supabase
-      const found = SEED_USERS.find((u) => u.email.toLowerCase() === cleanEmail);
+      // Fallback for local dev without Supabase: check users in localStorage database
+      let storedUsers: User[] = [];
+      try {
+        const local = localStorage.getItem('fortune_users_db');
+        if (local) storedUsers = JSON.parse(local);
+      } catch (err) {}
+
+      const allUsers = [...storedUsers, ...SEED_USERS];
+      const found = allUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+
       if (found) {
+        if (found.status === 'inactive') {
+          return { 
+            success: false, 
+            error: 'Account Deactivated: This user account is set to Inactive. Please contact Admin@fortuneinvestment.in to activate access.' 
+          };
+        }
         setUser(found);
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(found));
         return { success: true };
@@ -116,6 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: cleanEmail,
         name: cleanEmail.split('@')[0],
         role: cleanEmail.includes('admin') ? 'admin' : 'advisor',
+        status: 'active',
       };
       setUser(customUser);
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(customUser));

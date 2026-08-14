@@ -6,21 +6,27 @@ export const SEED_USERS: User[] = [
     email: 'Admin@fortuneinvestment.in',
     name: 'Fortune Admin',
     role: 'admin',
+    status: 'active',
     createdAt: '2026-01-01T00:00:00Z',
+    phone: '+91 98000 11111',
   },
   {
-    id: 'usr_rahul',
-    email: 'fortune.rahul@fortune.com',
-    name: 'Rahul Sharma (Senior Advisor)',
+    id: 'usr_advisor_1',
+    email: 'advisor1@fortuneinvestment.in',
+    name: 'Fortune Wealth Advisor',
     role: 'advisor',
-    createdAt: '2026-01-02T00:00:00Z',
+    status: 'active',
+    createdAt: '2026-02-01T00:00:00Z',
+    phone: '+91 98200 22222',
   },
   {
-    id: 'usr_priya',
-    email: 'fortune.priya@fortune.com',
-    name: 'Priya Mehta (Wealth Advisor)',
+    id: 'usr_advisor_2',
+    email: 'advisor2@fortuneinvestment.in',
+    name: 'Associate Advisor (Inactive)',
     role: 'advisor',
-    createdAt: '2026-01-03T00:00:00Z',
+    status: 'inactive',
+    createdAt: '2026-03-01T00:00:00Z',
+    phone: '+91 98300 33333',
   },
 ];
 
@@ -689,110 +695,6 @@ export const SEED_SCHEMES: Scheme[] = [
   }
 ];
 
-export const SEED_PROPOSALS: Proposal[] = [
-  {
-    id: 'prop-101',
-    name: 'Sharma Family Comprehensive Shield',
-    client: {
-      name: 'Amit Sharma',
-      age: 38,
-      family: 'Self (38), Spouse (35), Son (8)',
-      city: 'Mumbai',
-      advisor: 'Rahul Sharma',
-      email: 'amit.sharma@gmail.com',
-      phone: '+91 98200 12345',
-      members: [
-        { relation: 'Self', age: 38, name: 'Amit Sharma', premiumShare: 18000 },
-        { relation: 'Spouse', age: 35, name: 'Neha Sharma', premiumShare: 14000 },
-        { relation: 'Child 1', age: 8, name: 'Aarav Sharma', premiumShare: 8000 }
-      ]
-    },
-    compareIds: ['star-assure', 'hdfc-optima-secure', 'icici-iprotect-smart'],
-    createdBy: 'fortune.rahul@fortune.com',
-    createdByDisplay: 'Rahul Sharma (Senior Advisor)',
-    status: 'Sent to Client',
-    date: '2026-08-01',
-    category: 'health',
-    totalPremium: 40000,
-    customNotes: {
-      'star-assure': 'Highly recommended for the unlimited restoration feature as Amit has elderly parents visiting frequently.',
-      'hdfc-optima-secure': 'Excellent 4x cover multiplier for long term inflation protection.'
-    },
-    createdAt: '2026-08-01T10:30:00Z'
-  },
-  {
-    id: 'prop-102',
-    name: 'Verma Executive Life & Motor Plan',
-    client: {
-      name: 'Vikram Verma',
-      age: 42,
-      family: 'Self (42), Spouse (40), Daughter (12)',
-      city: 'Bengaluru',
-      advisor: 'Priya Mehta',
-      email: 'vikram.v@techcorp.io',
-      phone: '+91 99000 87654',
-      members: [
-        { relation: 'Self', age: 42, name: 'Vikram Verma', premiumShare: 24000 },
-        { relation: 'Spouse', age: 40, name: 'Ananya Verma', premiumShare: 18000 }
-      ]
-    },
-    compareIds: ['icici-iprotect-smart', 'hdfc-life-click-2-protect', 'bajaj-allianz-drive-smart'],
-    createdBy: 'fortune.priya@fortune.com',
-    createdByDisplay: 'Priya Mehta (Wealth Advisor)',
-    status: 'Purchased',
-    date: '2026-07-25',
-    category: 'term',
-    totalPremium: 57500,
-    customNotes: {
-      'icici-iprotect-smart': 'Purchased with ₹1.5 Cr sum assured and Critical Illness rider.'
-    },
-    createdAt: '2026-07-25T14:15:00Z'
-  },
-  {
-    id: 'prop-103',
-    name: 'Kulkarni International Travel & Health Portfolio',
-    client: {
-      name: 'Dr. Suresh Kulkarni',
-      age: 50,
-      family: 'Self (50), Spouse (48)',
-      city: 'Pune',
-      advisor: 'Rahul Sharma',
-      email: 'dr.kulkarni@healthclinic.org',
-      phone: '+91 94220 55432',
-      members: [
-        { relation: 'Self', age: 50, name: 'Dr. Suresh Kulkarni', premiumShare: 22000 },
-        { relation: 'Spouse', age: 48, name: 'Sunita Kulkarni', premiumShare: 19000 }
-      ]
-    },
-    compareIds: ['care-supreme', 'digit-global-travel', 'reliance-travel-care'],
-    createdBy: 'fortune.rahul@fortune.com',
-    createdByDisplay: 'Rahul Sharma (Senior Advisor)',
-    status: 'Created',
-    date: '2026-08-05',
-    category: 'travel',
-    totalPremium: 41000,
-    customNotes: {
-      'digit-global-travel': 'Selected for Europe vacation with zero deductible.'
-    },
-    createdAt: '2026-08-05T09:00:00Z'
-  }
-];
+export const SEED_PROPOSALS: Proposal[] = [];
 
-export const SEED_ADVISOR_NOTES: AdvisorNote[] = [
-  {
-    id: 'note-1',
-    schemeId: 'star-assure',
-    advisorId: 'usr_rahul',
-    advisorName: 'Rahul Sharma',
-    noteText: 'Best choice for families with high hospitalisation risks. Mention the no-room-rent-capping benefit on ₹10L+ plans to clients who prefer tier-1 private hospitals like Fortis or Apollo.',
-    updatedAt: '2026-08-02T11:20:00Z'
-  },
-  {
-    id: 'note-2',
-    schemeId: 'hdfc-optima-secure',
-    advisorId: 'usr_priya',
-    advisorName: 'Priya Mehta',
-    noteText: 'Pitch the 2x instant sum insured multiplier to young tech couples. High claim settlement ratio (98.4%) makes it easy to close with risk-averse HNI clients.',
-    updatedAt: '2026-08-04T16:45:00Z'
-  }
-];
+export const SEED_ADVISOR_NOTES: AdvisorNote[] = [];

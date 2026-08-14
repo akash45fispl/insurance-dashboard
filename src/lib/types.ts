@@ -1,4 +1,5 @@
 export type Role = 'admin' | 'advisor';
+export type UserStatus = 'active' | 'inactive';
 
 export type InsuranceCategory = 'health' | 'term' | 'motor' | 'travel';
 
@@ -7,7 +8,10 @@ export interface User {
   email: string;
   name: string;
   role: Role;
+  status?: UserStatus;
   createdAt?: string;
+  lastLogin?: string;
+  phone?: string;
 }
 
 export interface SchemeParameters {
