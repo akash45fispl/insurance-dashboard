@@ -73,12 +73,20 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
 
   // Filter users
   const filteredUsers = users.filter((u) => {
+    if (!u) return false;
+    const emailStr = (u.email || '').toLowerCase();
+    const idStr = (u.id || '').toLowerCase();
+    const nameStr = (u.name || '').toLowerCase();
+
+    if (emailStr.includes('advisor1@') || emailStr.includes('advisor2@')) return false;
+    if (emailStr.includes('rahul') || emailStr.includes('priya')) return false;
+    if (idStr.includes('usr_advisor_1') || idStr.includes('usr_advisor_2')) return false;
+    if (nameStr.includes('fortune wealth advisor') || nameStr.includes('associate advisor')) return false;
+
     const userStatus = u.status || 'active';
     const matchesStatus = statusFilter === 'all' || userStatus === statusFilter;
     const matchesRole = roleFilter === 'all' || u.role === roleFilter;
     
-    const nameStr = (u.name || '').toLowerCase();
-    const emailStr = (u.email || '').toLowerCase();
     const phoneStr = (u.phone || '').toLowerCase();
     const q = searchQuery.toLowerCase();
 
@@ -87,12 +95,26 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     return matchesStatus && matchesRole && matchesSearch;
   });
 
+  const realUsers = users.filter((u) => {
+    if (!u) return false;
+    const emailStr = (u.email || '').toLowerCase();
+    const idStr = (u.id || '').toLowerCase();
+    const nameStr = (u.name || '').toLowerCase();
+
+    if (emailStr.includes('advisor1@') || emailStr.includes('advisor2@')) return false;
+    if (emailStr.includes('rahul') || emailStr.includes('priya')) return false;
+    if (idStr.includes('usr_advisor_1') || idStr.includes('usr_advisor_2')) return false;
+    if (nameStr.includes('fortune wealth advisor') || nameStr.includes('associate advisor')) return false;
+
+    return true;
+  });
+
   // Metrics
-  const totalUsers = users.length;
-  const activeUsers = users.filter((u) => (u.status || 'active') === 'active').length;
-  const inactiveUsers = users.filter((u) => u.status === 'inactive').length;
-  const adminCount = users.filter((u) => u.role === 'admin').length;
-  const advisorCount = users.filter((u) => u.role === 'advisor').length;
+  const totalUsers = realUsers.length;
+  const activeUsers = realUsers.filter((u) => (u.status || 'active') === 'active').length;
+  const inactiveUsers = realUsers.filter((u) => u.status === 'inactive').length;
+  const adminCount = realUsers.filter((u) => u.role === 'admin').length;
+  const advisorCount = realUsers.filter((u) => u.role === 'advisor').length;
 
   const handleManualSync = async () => {
     setSyncing(true);

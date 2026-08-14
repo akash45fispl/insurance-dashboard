@@ -453,9 +453,24 @@ export async function saveAdvisorNote(schemeId: string, advisorId: string, advis
   return noteObj;
 }
 
+export function isDemoUser(u: any): boolean {
+  if (!u) return true;
+  const email = (u.email || '').toLowerCase();
+  const id = (u.id || '').toLowerCase();
+  const name = (u.name || '').toLowerCase();
+
+  if (email.includes('advisor1@') || email.includes('advisor2@')) return true;
+  if (email.includes('rahul') || email.includes('priya')) return true;
+  if (id.includes('usr_advisor_1') || id.includes('usr_advisor_2')) return true;
+  if (name.includes('fortune wealth advisor') || name.includes('associate advisor')) return true;
+
+  return false;
+}
+
 export function sanitizeUser(u: any): User | null {
   if (!u || typeof u !== 'object') return null;
   if (!u.email || typeof u.email !== 'string') return null;
+  if (isDemoUser(u)) return null;
 
   return {
     id: u.id || `usr_${Date.now()}`,

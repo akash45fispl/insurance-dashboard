@@ -5,9 +5,24 @@ import { User } from '@/lib/types';
 
 let memoryUsers: User[] = [...SEED_USERS];
 
+function isDemoUser(u: any): boolean {
+  if (!u) return true;
+  const email = (u.email || '').toLowerCase();
+  const id = (u.id || '').toLowerCase();
+  const name = (u.name || '').toLowerCase();
+
+  if (email.includes('advisor1@') || email.includes('advisor2@')) return true;
+  if (email.includes('rahul') || email.includes('priya')) return true;
+  if (id.includes('usr_advisor_1') || id.includes('usr_advisor_2')) return true;
+  if (name.includes('fortune wealth advisor') || name.includes('associate advisor')) return true;
+
+  return false;
+}
+
 function sanitizeUserRecord(u: any): User | null {
   if (!u || typeof u !== 'object') return null;
   if (!u.email || typeof u.email !== 'string') return null;
+  if (isDemoUser(u)) return null;
 
   return {
     id: u.id || `usr_${Date.now()}`,
@@ -22,6 +37,7 @@ function sanitizeUserRecord(u: any): User | null {
 }
 
 export async function GET() {
+  memoryUsers = memoryUsers.filter((u) => !isDemoUser(u));
   let combinedUsers = [...memoryUsers];
 
   if (isSupabaseConfigured && supabase) {
@@ -35,7 +51,7 @@ export async function GET() {
         [...combinedUsers, ...supUsers].forEach((u) => {
           map.set(u.email.toLowerCase(), u);
         });
-        combinedUsers = Array.from(map.values());
+        combinedUsers = Array.from(map.values()).filter((u) => !isDemoUser(u));
         memoryUsers = combinedUsers;
       }
     } catch (err) {
@@ -60,7 +76,7 @@ export async function POST(req: Request) {
       [...memoryUsers, ...sanitizedList].forEach((u) => {
         map.set(u.email.toLowerCase(), u);
       });
-      memoryUsers = Array.from(map.values());
+      memoryUsers = Array.from(map.values()).filter((u) => !isDemoUser(u));
 
       if (isSupabaseConfigured && supabase) {
         for (const u of sanitizedList) {
@@ -84,6 +100,7 @@ export async function POST(req: Request) {
         } else {
           memoryUsers.unshift(sanitized);
         }
+        memoryUsers = memoryUsers.filter((u) => !isDemoUser(u));
 
         if (isSupabaseConfigured && supabase) {
           await supabase.from('users').upsert({
