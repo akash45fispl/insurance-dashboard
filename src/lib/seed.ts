@@ -10,24 +10,6 @@ export const SEED_USERS: User[] = [
     createdAt: '2026-01-01T00:00:00Z',
     phone: '+91 98000 11111',
   },
-  {
-    id: 'usr_advisor_1',
-    email: 'advisor1@fortuneinvestment.in',
-    name: 'Fortune Wealth Advisor',
-    role: 'advisor',
-    status: 'active',
-    createdAt: '2026-02-01T00:00:00Z',
-    phone: '+91 98200 22222',
-  },
-  {
-    id: 'usr_advisor_2',
-    email: 'advisor2@fortuneinvestment.in',
-    name: 'Associate Advisor (Inactive)',
-    role: 'advisor',
-    status: 'inactive',
-    createdAt: '2026-03-01T00:00:00Z',
-    phone: '+91 98300 33333',
-  },
 ];
 
 export const SEED_SCHEMES: Scheme[] = [

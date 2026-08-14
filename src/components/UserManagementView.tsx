@@ -358,6 +358,40 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
         </div>
       </div>
 
+      {/* Quick Register User Bar */}
+      <div className="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 shadow-md flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs">
+          <UserPlus className="w-4 h-4 text-purple-400 shrink-0" />
+          <span className="font-bold">Register / Add User:</span>
+          <span className="text-slate-400">Enter email address to add to Active / Inactive user list & Supabase</span>
+        </div>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <input
+            type="email"
+            value={newUserEmail}
+            onChange={(e) => setNewUserEmail(e.target.value)}
+            placeholder="advisor@fortuneinvestment.in"
+            className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 font-mono flex-1 md:w-64"
+          />
+          <select
+            value={newUserRole}
+            onChange={(e) => setNewUserRole(e.target.value as Role)}
+            className="px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 font-semibold focus:outline-none"
+          >
+            <option value="advisor">Advisor</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button
+            type="button"
+            onClick={handleAddUserSubmit}
+            disabled={!newUserEmail || saving}
+            className="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow transition-all shrink-0"
+          >
+            + Add User
+          </button>
+        </div>
+      </div>
+
       {/* Users Table / Grid */}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         {filteredUsers.length === 0 ? (

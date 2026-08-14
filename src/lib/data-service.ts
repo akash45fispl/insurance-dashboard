@@ -431,31 +431,38 @@ async function syncUsersToServer(users: User[]): Promise<void> {
 
 // ---------------- USERS CRUD ----------------
 export async function getUsers(): Promise<User[]> {
+  let accumulated: any[] = [];
+
   try {
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.from('users').select('*');
       if (!error && data && data.length > 0) {
-        const supUsers = data.map(sanitizeUser).filter((u: User | null): u is User => u !== null);
-        const map = new Map<string, User>();
-        [...SEED_USERS, ...supUsers].forEach((u) => map.set(u.email.toLowerCase(), u));
-        const merged = Array.from(map.values());
-        setLocalItem(USERS_KEY, merged);
-        return merged;
+        accumulated = [...accumulated, ...data];
       }
     }
 
     const serverUsers = await fetchServerUsers();
     if (serverUsers && serverUsers.length > 0) {
-      setLocalItem(USERS_KEY, serverUsers);
-      return serverUsers;
+      accumulated = [...accumulated, ...serverUsers];
     }
   } catch (err) {
-    console.error('getUsers error:', err);
+    console.warn('getUsers cloud error:', err);
   }
 
   const rawLocal = getLocalItem<any[]>(USERS_KEY, SEED_USERS);
-  const sanitized = rawLocal.map(sanitizeUser).filter((u: User | null): u is User => u !== null);
-  return sanitized;
+  accumulated = [...SEED_USERS, ...rawLocal, ...accumulated];
+
+  const map = new Map<string, User>();
+  accumulated.forEach((item) => {
+    const sanitized = sanitizeUser(item);
+    if (sanitized && sanitized.email) {
+      map.set(sanitized.email.toLowerCase(), sanitized);
+    }
+  });
+
+  const finalUsers = Array.from(map.values());
+  setLocalItem(USERS_KEY, finalUsers);
+  return finalUsers;
 }
 
 export async function saveUser(user: User): Promise<User> {
