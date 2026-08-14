@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { ShieldCheck, Mail, ArrowRight, Lock, CheckCircle2, AlertCircle, Key, UserCheck } from 'lucide-react';
+import { ShieldCheck, Mail, ArrowRight, Lock, CheckCircle2, AlertCircle, UserCheck } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
   const { login, resetPassword } = useAuth();
@@ -27,18 +27,6 @@ export const LoginView: React.FC = () => {
     setLoading(false);
     if (!res.success) {
       setErrorMsg(res.error || 'Authentication failed');
-    }
-  };
-
-  const handleAdminQuickLogin = async () => {
-    setEmail('Admin@fortuneinvestment.in');
-    setPassword('Evolve@26');
-    setErrorMsg('');
-    setLoading(true);
-    const res = await login('Admin@fortuneinvestment.in', 'Evolve@26');
-    setLoading(false);
-    if (!res.success) {
-      setErrorMsg(res.error || 'Admin Login failed');
     }
   };
 
@@ -74,7 +62,8 @@ export const LoginView: React.FC = () => {
             type="button"
             onClick={() => {
               setLoginMode('advisor');
-              if (email === 'Admin@fortuneinvestment.in') setEmail('');
+              setEmail('');
+              setPassword('');
               setErrorMsg('');
             }}
             className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
@@ -91,8 +80,8 @@ export const LoginView: React.FC = () => {
             type="button"
             onClick={() => {
               setLoginMode('admin');
-              setEmail('Admin@fortuneinvestment.in');
-              setPassword('Evolve@26');
+              setEmail('');
+              setPassword('');
               setErrorMsg('');
             }}
             className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
@@ -118,7 +107,7 @@ export const LoginView: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              {loginMode === 'admin' ? 'Admin ID / Email' : 'Advisor Email'}
+              {loginMode === 'admin' ? 'Admin Email / ID' : 'Advisor Email'}
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -126,16 +115,11 @@ export const LoginView: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={loginMode === 'admin' ? 'Admin@fortuneinvestment.in' : 'advisor@fortune.com'}
+                placeholder={loginMode === 'admin' ? 'admin@fortuneinvestment.in' : 'advisor@fortune.com'}
                 className="w-full pl-10 pr-3 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-blue-500 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
                 required
               />
             </div>
-            {loginMode === 'admin' && (
-              <p className="text-[11px] text-purple-400 mt-1">
-                Admin ID: <code className="bg-slate-950 px-1 py-0.5 rounded font-mono text-purple-300">Admin@fortuneinvestment.in</code>
-              </p>
-            )}
           </div>
 
           <div>
@@ -160,15 +144,11 @@ export const LoginView: React.FC = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={loginMode === 'admin' ? 'Evolve@26' : '••••••••••••'}
+                placeholder="••••••••••••"
                 className="w-full pl-10 pr-3 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-blue-500 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
+                required
               />
             </div>
-            {loginMode === 'admin' && (
-              <p className="text-[11px] text-purple-400 mt-1">
-                Admin Password: <code className="bg-slate-950 px-1 py-0.5 rounded font-mono text-purple-300">Evolve@26</code>
-              </p>
-            )}
           </div>
 
           <button
@@ -184,19 +164,6 @@ export const LoginView: React.FC = () => {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        {/* Quick Admin Login Button Card */}
-        <div className="mt-6 pt-5 border-t border-slate-800/80">
-          <button
-            type="button"
-            onClick={handleAdminQuickLogin}
-            disabled={loading}
-            className="w-full py-2.5 px-4 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-2xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 shadow-sm"
-          >
-            <ShieldCheck className="w-4 h-4 text-purple-400" />
-            <span>⚡ 1-Click Login as Admin (Admin@fortuneinvestment.in)</span>
-          </button>
-        </div>
 
         {/* Password Reset Modal */}
         {resetModalOpen && (
