@@ -38,28 +38,37 @@ function sanitizeUserRecord(u: any): User | null {
 
 export async function GET() {
   memoryUsers = memoryUsers.filter((u) => !isDemoUser(u));
-  let combinedUsers = [...memoryUsers];
 
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase.from('users').select('*');
-      if (!error && data && data.length > 0) {
-        const supUsers = data.map(sanitizeUserRecord).filter((u: User | null): u is User => u !== null);
+      if (!error && Array.isArray(data)) {
+        const supUsers = data
+          .map(sanitizeUserRecord)
+          .filter((u: User | null): u is User => u !== null);
         
-        // Merge Supabase users with memory users avoiding duplicate emails
-        const map = new Map<string, User>();
-        [...combinedUsers, ...supUsers].forEach((u) => {
-          map.set(u.email.toLowerCase(), u);
+        // Supabase is the single source of truth when connected!
+        // Ensure default Admin user exists
+        const hasAdmin = supUsers.some(
+          (u) => u.email.toLowerCase() === 'admin@fortuneinvestment.in'
+        );
+        if (!hasAdmin) {
+          supUsers.unshift(SEED_USERS[0]);
+        }
+
+        memoryUsers = supUsers;
+        return NextResponse.json({ users: supUsers }, {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
+          },
         });
-        combinedUsers = Array.from(map.values()).filter((u) => !isDemoUser(u));
-        memoryUsers = combinedUsers;
       }
     } catch (err) {
       console.warn('Supabase users fetch warning:', err);
     }
   }
 
-  return NextResponse.json({ users: combinedUsers }, {
+  return NextResponse.json({ users: memoryUsers }, {
     headers: {
       'Cache-Control': 'no-store, no-cache, must-revalidate',
     },

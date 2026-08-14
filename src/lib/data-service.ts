@@ -514,22 +514,45 @@ async function syncUsersToServer(users: User[]): Promise<void> {
 
 // ---------------- USERS CRUD ----------------
 export async function getUsers(): Promise<User[]> {
-  let accumulated: any[] = [];
+  let supabaseSuccess = false;
+  let supabaseUserList: User[] = [];
 
-  try {
-    if (isSupabaseConfigured && supabase) {
+  // 1. Try fetching directly from Supabase DB table 'users'
+  if (isSupabaseConfigured && supabase) {
+    try {
       const { data, error } = await supabase.from('users').select('*');
-      if (!error && data && data.length > 0) {
-        accumulated = [...accumulated, ...data];
+      if (!error && Array.isArray(data)) {
+        supabaseSuccess = true;
+        supabaseUserList = data
+          .map(sanitizeUser)
+          .filter((u: User | null): u is User => u !== null);
       }
+    } catch (err) {
+      console.warn('getUsers cloud error:', err);
+    }
+  }
+
+  // 2. If Supabase succeeded, treat Supabase as Single Source of Truth
+  if (supabaseSuccess) {
+    // Ensure default Admin user exists in list
+    const hasAdmin = supabaseUserList.some(
+      (u) => u.email.toLowerCase() === 'admin@fortuneinvestment.in'
+    );
+    if (!hasAdmin) {
+      supabaseUserList.unshift(SEED_USERS[0]);
     }
 
-    const serverUsers = await fetchServerUsers();
-    if (serverUsers && serverUsers.length > 0) {
-      accumulated = [...accumulated, ...serverUsers];
-    }
-  } catch (err) {
-    console.warn('getUsers cloud error:', err);
+    // Overwrite local storage and server cache so deleted users disappear immediately
+    setLocalItem(USERS_KEY, supabaseUserList);
+    syncUsersToServer(supabaseUserList);
+    return supabaseUserList;
+  }
+
+  // 3. Fallback if Supabase is offline: merge local storage & server memory
+  let accumulated: any[] = [];
+  const serverUsers = await fetchServerUsers();
+  if (serverUsers && serverUsers.length > 0) {
+    accumulated = [...accumulated, ...serverUsers];
   }
 
   const rawLocal = getLocalItem<any[]>(USERS_KEY, SEED_USERS);
@@ -599,10 +622,13 @@ export async function updateUserStatus(userId: string, status: 'active' | 'inact
   return null;
 }
 
-export async function deleteUser(userId: string): Promise<boolean> {
+export async function deleteUser(userId: string, email?: string): Promise<boolean> {
   if (isSupabaseConfigured && supabase) {
     try {
       await supabase.from('users').delete().eq('id', userId);
+      if (email) {
+        await supabase.from('users').delete().eq('email', email);
+      }
     } catch (err) {
       console.warn('Supabase user delete error:', err);
     }
@@ -610,7 +636,9 @@ export async function deleteUser(userId: string): Promise<boolean> {
 
   const rawUsers = getLocalItem<any[]>(USERS_KEY, SEED_USERS);
   const users = rawUsers.map(sanitizeUser).filter((u: User | null): u is User => u !== null);
-  const filtered = users.filter((u) => u.id !== userId);
+  const filtered = users.filter(
+    (u) => u.id !== userId && (!email || u.email.toLowerCase() !== email.toLowerCase())
+  );
   setLocalItem(USERS_KEY, filtered);
   syncUsersToServer(filtered);
   return true;
