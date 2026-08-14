@@ -45,22 +45,31 @@ export const ClientProposals: React.FC<ClientProposalsProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [advisorFilter, setAdvisorFilter] = useState<string>('all');
 
-  // Extract unique advisors
-  const advisors = Array.from(new Set(proposals.map((p) => p.createdByDisplay || p.createdBy)));
+  // Extract unique advisors safely
+  const advisors = Array.from(new Set(proposals.map((p) => p.createdByDisplay || p.createdBy || 'Advisor')));
 
   const filteredProposals = proposals.filter((p) => {
+    if (!p) return false;
+    const pCreatedBy = (p.createdBy || '').toLowerCase();
+    const pCreatedByDisplay = (p.createdByDisplay || '').toLowerCase();
+    const userEmail = (user?.email || '').toLowerCase();
+    const userName = (user?.name || '').toLowerCase();
+
     // Proposal Privacy Control: Admin sees all proposals; Advisor sees ONLY their own proposals
     const matchesUserPrivacy = isAdmin || !user || 
-      p.createdBy.toLowerCase() === user.email.toLowerCase() ||
-      (p.createdByDisplay && p.createdByDisplay.toLowerCase() === user.name.toLowerCase());
+      (userEmail && pCreatedBy === userEmail) ||
+      (userName && pCreatedByDisplay === userName);
 
     const matchesCat = categoryFilter === 'all' || p.category === categoryFilter;
     const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
     const matchesAdvisor = advisorFilter === 'all' || (p.createdByDisplay || p.createdBy) === advisorFilter;
-    const matchesSearch =
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.client.city.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const pName = (p.name || '').toLowerCase();
+    const clientName = (p.client?.name || '').toLowerCase();
+    const clientCity = (p.client?.city || '').toLowerCase();
+    const q = searchQuery.toLowerCase();
+
+    const matchesSearch = !q || pName.includes(q) || clientName.includes(q) || clientCity.includes(q);
 
     return matchesUserPrivacy && matchesCat && matchesStatus && matchesAdvisor && matchesSearch;
   });

@@ -7,9 +7,91 @@ const PROPOSALS_KEY = 'fortune_proposals_db';
 const NOTES_KEY = 'fortune_notes_db';
 const USERS_KEY = 'fortune_users_db';
 
-// Central Cloud Synchronization Endpoints for Cross-Device Shared Storage
-const PROPOSALS_CLOUD_URL = 'https://api.restful-api.dev/objects/ff8081819ff5b110019ffedce8dc176a';
-const SCHEMES_CLOUD_URL = 'https://api.restful-api.dev/objects/ff8081819ff5b110019ffede011e176c';
+// ---------------- SANITIZATION & DEFENSIVE DATA GUARDS ----------------
+export function sanitizeProposal(p: any): Proposal | null {
+  if (!p || typeof p !== 'object') return null;
+  if (!p.id || typeof p.id !== 'string') return null;
+
+  return {
+    id: p.id,
+    name: p.name || 'Untitled Proposal',
+    client: {
+      name: p.client?.name || 'Client',
+      age: typeof p.client?.age === 'number' ? p.client.age : 35,
+      family: p.client?.family || 'Self',
+      city: p.client?.city || 'Location',
+      advisor: p.client?.advisor || 'Advisor',
+      email: p.client?.email || '',
+      phone: p.client?.phone || '',
+      members: Array.isArray(p.client?.members) ? p.client.members : [],
+    },
+    compareIds: Array.isArray(p.compareIds) ? p.compareIds : [],
+    createdBy: p.createdBy || 'advisor@fortune.com',
+    createdByDisplay: p.createdByDisplay || 'Advisor',
+    status: p.status || 'Created',
+    date: p.date || new Date().toISOString().split('T')[0],
+    category: p.category || 'health',
+    totalPremium: typeof p.totalPremium === 'number' ? p.totalPremium : 35000,
+    customNotes: p.customNotes || {},
+    createdAt: p.createdAt || new Date().toISOString(),
+    statusLog: Array.isArray(p.statusLog) ? p.statusLog : [],
+    schemeCalculations: p.schemeCalculations || undefined,
+  };
+}
+
+export function sanitizeScheme(s: any): Scheme | null {
+  if (!s || typeof s !== 'object') return null;
+  if (!s.id || typeof s.id !== 'string') return null;
+
+  return {
+    id: s.id,
+    category: s.category || 'health',
+    insurer: s.insurer || 'Insurer',
+    type: s.type || 'standalone',
+    plan: s.plan || 'Plan',
+    tagline: s.tagline || '',
+    csr: s.csr || '90%',
+    network: s.network || '10,000+ Hospitals',
+    sumInsured: s.sumInsured || '₹5 Lakhs',
+    entryAge: s.entryAge || '18-65 yrs',
+    roomRent: s.roomRent || 'No cap',
+    restoration: s.restoration || '100%',
+    waitingPED: s.waitingPED || '36 months',
+    ratePerLakh: typeof s.ratePerLakh === 'number' ? s.ratePerLakh : 1200,
+    financials: s.financials || {
+      sumInsured: s.sumInsured || '₹5 Lakhs',
+      entryAge: s.entryAge || '18-65 yrs',
+      network: s.network || '10,000+ Hospitals',
+      roomRent: s.roomRent || 'No cap',
+      restoration: s.restoration || '100%',
+      waitingPED: s.waitingPED || '36 months',
+      csr: s.csr || '90%',
+      premium: 'Est. ₹12,000/yr',
+    },
+    inclusions: Array.isArray(s.inclusions) ? s.inclusions : [],
+    specialBenefits: Array.isArray(s.specialBenefits) ? s.specialBenefits : [],
+    hospitalNetwork: s.hospitalNetwork || {
+      csrPercentage: s.csr || '90%',
+      cashlessGaragesOrHospitalsCount: s.network || '10,000+ Hospitals',
+      settlementSpeed: '< 2 Hours',
+      tpaSupport: 'Direct in-house claims'
+    },
+    targetProfile: s.targetProfile || {
+      bestFor: 'General policyholders',
+      idealAgeRange: '18 – 65 years',
+      recommendedFamilyType: 'Self + Spouse + Children'
+    },
+    finePrint: s.finePrint || {
+      subLimits: 'Standard policy sub-limits apply.',
+      deductibles: 'Zero deductible',
+      coPay: 'Nil'
+    },
+    exclusions: Array.isArray(s.exclusions) ? s.exclusions : [],
+    premiumNote: s.premiumNote || '',
+    logoUrl: s.logoUrl || undefined,
+    calculatedPremium: s.calculatedPremium || undefined,
+  };
+}
 
 // Helper for localStorage fallback
 function getLocalItem<T>(key: string, seedDefault: T): T {
@@ -36,81 +118,86 @@ function setLocalItem<T>(key: string, value: T): void {
   }
 }
 
-// ---------------- CLOUD SYNC HELPERS ----------------
-async function fetchCloudProposals(): Promise<Proposal[] | null> {
+// ---------------- SERVER API CLOUD SYNC HELPERS ----------------
+async function fetchServerProposals(): Promise<Proposal[] | null> {
+  if (typeof window === 'undefined') return null;
   try {
-    const res = await fetch(PROPOSALS_CLOUD_URL, { cache: 'no-store' });
+    const res = await fetch('/api/proposals', { cache: 'no-store' });
     if (!res.ok) return null;
     const json = await res.json();
-    if (json.data && Array.isArray(json.data.proposals)) {
-      return json.data.proposals as Proposal[];
+    if (json && Array.isArray(json.proposals)) {
+      const sanitized = json.proposals.map(sanitizeProposal).filter((p: Proposal | null): p is Proposal => p !== null);
+      return sanitized;
     }
   } catch (err) {
-    console.warn('Cloud proposal fetch warning:', err);
+    console.warn('Server proposals sync fetch error:', err);
   }
   return null;
 }
 
-async function syncProposalsToCloud(proposals: Proposal[]): Promise<void> {
+async function syncProposalsToServer(proposals: Proposal[]): Promise<void> {
+  if (typeof window === 'undefined') return;
   try {
-    await fetch(PROPOSALS_CLOUD_URL, {
-      method: 'PUT',
+    await fetch('/api/proposals', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: 'fortune_proposals',
-        data: { proposals },
-      }),
+      body: JSON.stringify({ proposals }),
     });
   } catch (err) {
-    console.warn('Cloud proposal sync push warning:', err);
+    console.warn('Server proposal sync push error:', err);
   }
 }
 
-async function fetchCloudSchemes(): Promise<Scheme[] | null> {
+async function fetchServerSchemes(): Promise<Scheme[] | null> {
+  if (typeof window === 'undefined') return null;
   try {
-    const res = await fetch(SCHEMES_CLOUD_URL, { cache: 'no-store' });
+    const res = await fetch('/api/schemes', { cache: 'no-store' });
     if (!res.ok) return null;
     const json = await res.json();
-    if (json.data && Array.isArray(json.data.schemes)) {
-      return json.data.schemes as Scheme[];
+    if (json && Array.isArray(json.schemes)) {
+      const sanitized = json.schemes.map(sanitizeScheme).filter((s: Scheme | null): s is Scheme => s !== null);
+      return sanitized;
     }
   } catch (err) {
-    console.warn('Cloud scheme fetch warning:', err);
+    console.warn('Server scheme sync fetch error:', err);
   }
   return null;
 }
 
-async function syncSchemesToCloud(schemes: Scheme[]): Promise<void> {
+async function syncSchemesToServer(schemes: Scheme[]): Promise<void> {
+  if (typeof window === 'undefined') return;
   try {
-    await fetch(SCHEMES_CLOUD_URL, {
-      method: 'PUT',
+    await fetch('/api/schemes', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: 'fortune_schemes',
-        data: { schemes },
-      }),
+      body: JSON.stringify({ schemes }),
     });
   } catch (err) {
-    console.warn('Cloud scheme sync push warning:', err);
+    console.warn('Server scheme sync push error:', err);
   }
 }
 
 // ---------------- SCHEMES CRUD ----------------
 export async function getSchemes(): Promise<Scheme[]> {
-  if (isSupabaseConfigured && supabase) {
-    const { data, error } = await supabase.from('schemes').select('*');
-    if (!error && data && data.length > 0) {
-      return data as Scheme[];
+  try {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.from('schemes').select('*');
+      if (!error && data && data.length > 0) {
+        return data.map(sanitizeScheme).filter((s: Scheme | null): s is Scheme => s !== null);
+      }
     }
+
+    const serverSchemes = await fetchServerSchemes();
+    if (serverSchemes && serverSchemes.length > 0) {
+      setLocalItem(SCHEMES_KEY, serverSchemes);
+      return serverSchemes;
+    }
+  } catch (err) {
+    console.error('getSchemes error:', err);
   }
 
-  const cloudSchemes = await fetchCloudSchemes();
-  if (cloudSchemes && cloudSchemes.length > 0) {
-    setLocalItem(SCHEMES_KEY, cloudSchemes);
-    return cloudSchemes;
-  }
-
-  return getLocalItem<Scheme[]>(SCHEMES_KEY, SEED_SCHEMES);
+  const rawLocal = getLocalItem<any[]>(SCHEMES_KEY, SEED_SCHEMES);
+  return rawLocal.map(sanitizeScheme).filter((s: Scheme | null): s is Scheme => s !== null);
 }
 
 export async function getSchemeById(id: string): Promise<Scheme | null> {
@@ -121,10 +208,15 @@ export async function getSchemeById(id: string): Promise<Scheme | null> {
 export async function saveScheme(scheme: Scheme): Promise<Scheme> {
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.from('schemes').upsert(scheme).select().single();
-    if (!error && data) return data as Scheme;
+    if (!error && data) {
+      const sanitized = sanitizeScheme(data);
+      if (sanitized) return sanitized;
+    }
   }
   
-  const schemes = getLocalItem<Scheme[]>(SCHEMES_KEY, SEED_SCHEMES);
+  const rawSchemes = getLocalItem<any[]>(SCHEMES_KEY, SEED_SCHEMES);
+  const schemes = rawSchemes.map(sanitizeScheme).filter((s: Scheme | null): s is Scheme => s !== null);
+  
   const idx = schemes.findIndex((s) => s.id === scheme.id);
   if (idx >= 0) {
     schemes[idx] = scheme;
@@ -132,7 +224,7 @@ export async function saveScheme(scheme: Scheme): Promise<Scheme> {
     schemes.unshift(scheme);
   }
   setLocalItem(SCHEMES_KEY, schemes);
-  syncSchemesToCloud(schemes);
+  syncSchemesToServer(schemes);
   return scheme;
 }
 
@@ -142,35 +234,39 @@ export async function deleteScheme(id: string): Promise<boolean> {
     if (!error) return true;
   }
 
-  const schemes = getLocalItem<Scheme[]>(SCHEMES_KEY, SEED_SCHEMES);
+  const rawSchemes = getLocalItem<any[]>(SCHEMES_KEY, SEED_SCHEMES);
+  const schemes = rawSchemes.map(sanitizeScheme).filter((s: Scheme | null): s is Scheme => s !== null);
   const filtered = schemes.filter((s) => s.id !== id);
   setLocalItem(SCHEMES_KEY, filtered);
-  syncSchemesToCloud(filtered);
+  syncSchemesToServer(filtered);
   return true;
 }
 
 // ---------------- PROPOSALS CRUD ----------------
 export async function getProposals(): Promise<Proposal[]> {
-  if (isSupabaseConfigured && supabase) {
-    const { data, error } = await supabase.from('proposals').select('*').order('created_at', { ascending: false });
-    if (!error && data && data.length > 0) {
-      return data as Proposal[];
+  try {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.from('proposals').select('*').order('created_at', { ascending: false });
+      if (!error && data && data.length > 0) {
+        return data.map(sanitizeProposal).filter((p: Proposal | null): p is Proposal => p !== null);
+      }
     }
+
+    const serverProps = await fetchServerProposals();
+    if (serverProps && serverProps.length > 0) {
+      setLocalItem(PROPOSALS_KEY, serverProps);
+      return serverProps;
+    }
+  } catch (err) {
+    console.error('getProposals error:', err);
   }
 
-  // Cloud sync fetch for cross-device visibility
-  const cloudProposals = await fetchCloudProposals();
-  if (cloudProposals && cloudProposals.length > 0) {
-    setLocalItem(PROPOSALS_KEY, cloudProposals);
-    return cloudProposals;
+  const rawLocal = getLocalItem<any[]>(PROPOSALS_KEY, SEED_PROPOSALS);
+  const sanitized = rawLocal.map(sanitizeProposal).filter((p: Proposal | null): p is Proposal => p !== null);
+  if (sanitized.length > 0) {
+    syncProposalsToServer(sanitized);
   }
-
-  const localProps = getLocalItem<Proposal[]>(PROPOSALS_KEY, SEED_PROPOSALS);
-  // Ensure seed/local proposals are seeded up to cloud if empty
-  if (localProps.length > 0) {
-    syncProposalsToCloud(localProps);
-  }
-  return localProps;
+  return sanitized;
 }
 
 export async function getProposalById(id: string): Promise<Proposal | null> {
@@ -187,25 +283,24 @@ export async function createProposal(proposal: Omit<Proposal, 'id' | 'createdAt'
 
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.from('proposals').insert(newProposal).select().single();
-    if (!error && data) return data as Proposal;
+    if (!error && data) {
+      const sanitized = sanitizeProposal(data);
+      if (sanitized) return sanitized;
+    }
   }
 
-  const proposals = getLocalItem<Proposal[]>(PROPOSALS_KEY, SEED_PROPOSALS);
+  const rawProps = getLocalItem<any[]>(PROPOSALS_KEY, SEED_PROPOSALS);
+  const proposals = rawProps.map(sanitizeProposal).filter((p: Proposal | null): p is Proposal => p !== null);
   proposals.unshift(newProposal);
   setLocalItem(PROPOSALS_KEY, proposals);
-  
-  // Sync to Cloud REST DB so all other devices receive this proposal
-  syncProposalsToCloud(proposals);
+  syncProposalsToServer(proposals);
 
   return newProposal;
 }
 
 export async function updateProposalStatus(id: string, status: ProposalStatus, userName: string = 'Admin'): Promise<Proposal | null> {
-  if (isSupabaseConfigured && supabase) {
-    // Supabase update handling
-  }
-
-  const proposals = getLocalItem<Proposal[]>(PROPOSALS_KEY, SEED_PROPOSALS);
+  const rawProps = getLocalItem<any[]>(PROPOSALS_KEY, SEED_PROPOSALS);
+  const proposals = rawProps.map(sanitizeProposal).filter((p: Proposal | null): p is Proposal => p !== null);
   const idx = proposals.findIndex((p) => p.id === id);
   if (idx >= 0) {
     const oldStatus = proposals[idx].status;
@@ -223,7 +318,7 @@ export async function updateProposalStatus(id: string, status: ProposalStatus, u
     });
     
     setLocalItem(PROPOSALS_KEY, proposals);
-    syncProposalsToCloud(proposals);
+    syncProposalsToServer(proposals);
     return proposals[idx];
   }
   return null;
@@ -235,10 +330,11 @@ export async function deleteProposal(id: string): Promise<boolean> {
     if (!error) return true;
   }
 
-  const proposals = getLocalItem<Proposal[]>(PROPOSALS_KEY, SEED_PROPOSALS);
+  const rawProps = getLocalItem<any[]>(PROPOSALS_KEY, SEED_PROPOSALS);
+  const proposals = rawProps.map(sanitizeProposal).filter((p: Proposal | null): p is Proposal => p !== null);
   const filtered = proposals.filter((p) => p.id !== id);
   setLocalItem(PROPOSALS_KEY, filtered);
-  syncProposalsToCloud(filtered);
+  syncProposalsToServer(filtered);
   return true;
 }
 
@@ -332,7 +428,7 @@ export async function getAnalyticsMetrics(): Promise<AnalyticsMetrics> {
   // Status distribution
   const statusCounts: Record<ProposalStatus, number> = { 'Created': 0, 'Sent to Client': 0, 'Accepted': 0, 'Purchased': 0, 'Declined': 0 };
   proposals.forEach((p) => {
-    if (statusCounts[p.status] !== undefined) statusCounts[p.status] += 1;
+    if (p && p.status && statusCounts[p.status] !== undefined) statusCounts[p.status] += 1;
   });
 
   const statusDistribution = Object.entries(statusCounts).map(([status, count]) => ({
