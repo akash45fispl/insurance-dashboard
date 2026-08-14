@@ -236,7 +236,7 @@ export default function HomePage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Compare toggle handler
+  // Compare toggle handler with Category Lock enforcement
   const handleToggleCompare = (id: string) => {
     if (compareIds.includes(id)) {
       setCompareIds(compareIds.filter((cId) => cId !== id));
@@ -245,6 +245,18 @@ export default function HomePage() {
         alert('You can compare a maximum of 4 schemes simultaneously.');
         return;
       }
+
+      // Strict Category Rule: Only schemes of the SAME category can be added to comparison
+      if (compareIds.length > 0) {
+        const activeCategory = schemes.find((s) => compareIds.includes(s.id))?.category;
+        const targetScheme = schemes.find((s) => s.id === id);
+
+        if (activeCategory && targetScheme && targetScheme.category !== activeCategory) {
+          alert(`Category Mismatch: Only insurance policies of the SAME category can be compared together. Current comparison matrix is locked to "${activeCategory.toUpperCase()}" insurance. Please clear the matrix or select ${activeCategory.toUpperCase()} policies.`);
+          return;
+        }
+      }
+
       setCompareIds([...compareIds, id]);
     }
   };

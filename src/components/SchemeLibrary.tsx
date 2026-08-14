@@ -169,6 +169,25 @@ export const SchemeLibrary: React.FC<SchemeLibraryProps> = ({
 
       </div>
 
+      {/* Active Category Lock Banner */}
+      {compareIds.length > 0 && (() => {
+        const activeCat = schemes.find(s => compareIds.includes(s.id))?.category;
+        if (!activeCat) return null;
+        return (
+          <div className="p-3.5 bg-indigo-950/80 border border-indigo-500/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-indigo-200 mb-6 shadow-sm">
+            <div className="flex items-center gap-2 font-semibold">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+              <span>
+                Comparison Matrix Locked to: <strong className="text-white uppercase font-extrabold tracking-wide">{activeCat} Policies ({compareIds.length}/4)</strong>
+              </span>
+            </div>
+            <span className="text-[11px] text-indigo-300 font-medium">
+              Only {activeCat.toUpperCase()} insurance policies can be selected to compare.
+            </span>
+          </div>
+        );
+      })()}
+
       {/* Schemes Container */}
       {filteredSchemes.length === 0 ? (
         <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">

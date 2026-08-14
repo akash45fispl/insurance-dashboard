@@ -24,7 +24,14 @@ export const SchemeComparison: React.FC<SchemeComparisonProps> = ({
 
   // Get schemes selected for comparison
   const selectedSchemes = schemes.filter((s) => compareIds.includes(s.id));
-  const unselectedSchemes = schemes.filter((s) => !compareIds.includes(s.id));
+  const activeCategory = selectedSchemes.length > 0 ? selectedSchemes[0].category : null;
+
+  // Filter unselected schemes to ONLY match active category
+  const unselectedSchemes = schemes.filter((s) => {
+    if (compareIds.includes(s.id)) return false;
+    if (activeCategory && s.category !== activeCategory) return false;
+    return true;
+  });
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm mb-8">
@@ -32,11 +39,16 @@ export const SchemeComparison: React.FC<SchemeComparisonProps> = ({
       {/* Panel Heading */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Compare Schemes</h2>
             <span className="bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-bold text-xs px-2.5 py-0.5 rounded-full">
               Side-by-Side Spec Matrix ({selectedSchemes.length}/4)
             </span>
+            {activeCategory && (
+              <span className="bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold text-xs px-2.5 py-0.5 rounded-full uppercase">
+                {activeCategory} Policies Only
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Compare key financials, inclusions, CSR %, room capping, restoration, and fine print across selected policies.
