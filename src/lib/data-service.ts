@@ -385,17 +385,98 @@ export async function saveAdvisorNote(schemeId: string, advisorId: string, advis
   return noteObj;
 }
 
+export function sanitizeUser(u: any): User | null {
+  if (!u || typeof u !== 'object') return null;
+  if (!u.email || typeof u.email !== 'string') return null;
+
+  return {
+    id: u.id || `usr_${Date.now()}`,
+    email: u.email,
+    name: u.name || u.email.split('@')[0],
+    role: u.role === 'admin' || u.email.toLowerCase().includes('admin') ? 'admin' : 'advisor',
+    status: u.status === 'inactive' ? 'inactive' : 'active',
+    createdAt: u.createdAt || u.created_at || new Date().toISOString(),
+    phone: u.phone || '+91 98000 00000',
+    lastLogin: u.lastLogin || u.last_login || new Date().toISOString(),
+  };
+}
+
+async function fetchServerUsers(): Promise<User[] | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const res = await fetch('/api/users', { cache: 'no-store' });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json && Array.isArray(json.users)) {
+      return json.users.map(sanitizeUser).filter((u: User | null): u is User => u !== null);
+    }
+  } catch (err) {
+    console.warn('Server users sync fetch error:', err);
+  }
+  return null;
+}
+
+async function syncUsersToServer(users: User[]): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ users }),
+    });
+  } catch (err) {
+    console.warn('Server user sync push error:', err);
+  }
+}
+
 // ---------------- USERS CRUD ----------------
 export async function getUsers(): Promise<User[]> {
-  if (isSupabaseConfigured && supabase) {
-    const { data, error } = await supabase.from('users').select('*');
-    if (!error && data && data.length > 0) return data as User[];
+  try {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.from('users').select('*');
+      if (!error && data && data.length > 0) {
+        const supUsers = data.map(sanitizeUser).filter((u: User | null): u is User => u !== null);
+        const map = new Map<string, User>();
+        [...SEED_USERS, ...supUsers].forEach((u) => map.set(u.email.toLowerCase(), u));
+        const merged = Array.from(map.values());
+        setLocalItem(USERS_KEY, merged);
+        return merged;
+      }
+    }
+
+    const serverUsers = await fetchServerUsers();
+    if (serverUsers && serverUsers.length > 0) {
+      setLocalItem(USERS_KEY, serverUsers);
+      return serverUsers;
+    }
+  } catch (err) {
+    console.error('getUsers error:', err);
   }
-  return getLocalItem<User[]>(USERS_KEY, SEED_USERS);
+
+  const rawLocal = getLocalItem<any[]>(USERS_KEY, SEED_USERS);
+  const sanitized = rawLocal.map(sanitizeUser).filter((u: User | null): u is User => u !== null);
+  return sanitized;
 }
 
 export async function saveUser(user: User): Promise<User> {
-  const users = getLocalItem<User[]>(USERS_KEY, SEED_USERS);
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.from('users').upsert({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        status: user.status || 'active',
+        phone: user.phone || '+91 98000 00000',
+        updated_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn('Supabase user save error:', err);
+    }
+  }
+
+  const rawUsers = getLocalItem<any[]>(USERS_KEY, SEED_USERS);
+  const users = rawUsers.map(sanitizeUser).filter((u: User | null): u is User => u !== null);
   const idx = users.findIndex((u) => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase());
   if (idx >= 0) {
     users[idx] = { ...users[idx], ...user };
@@ -403,24 +484,45 @@ export async function saveUser(user: User): Promise<User> {
     users.unshift(user);
   }
   setLocalItem(USERS_KEY, users);
+  syncUsersToServer(users);
   return user;
 }
 
 export async function updateUserStatus(userId: string, status: 'active' | 'inactive'): Promise<User | null> {
-  const users = getLocalItem<User[]>(USERS_KEY, SEED_USERS);
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.from('users').update({ status }).eq('id', userId);
+    } catch (err) {
+      console.warn('Supabase user status update error:', err);
+    }
+  }
+
+  const rawUsers = getLocalItem<any[]>(USERS_KEY, SEED_USERS);
+  const users = rawUsers.map(sanitizeUser).filter((u: User | null): u is User => u !== null);
   const idx = users.findIndex((u) => u.id === userId);
   if (idx >= 0) {
     users[idx].status = status;
     setLocalItem(USERS_KEY, users);
+    syncUsersToServer(users);
     return users[idx];
   }
   return null;
 }
 
 export async function deleteUser(userId: string): Promise<boolean> {
-  const users = getLocalItem<User[]>(USERS_KEY, SEED_USERS);
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.from('users').delete().eq('id', userId);
+    } catch (err) {
+      console.warn('Supabase user delete error:', err);
+    }
+  }
+
+  const rawUsers = getLocalItem<any[]>(USERS_KEY, SEED_USERS);
+  const users = rawUsers.map(sanitizeUser).filter((u: User | null): u is User => u !== null);
   const filtered = users.filter((u) => u.id !== userId);
   setLocalItem(USERS_KEY, filtered);
+  syncUsersToServer(filtered);
   return true;
 }
 

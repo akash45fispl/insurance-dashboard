@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Role } from './types';
 import { SEED_USERS } from './seed';
 import { supabase, isSupabaseConfigured } from './supabase';
+import { saveUser } from './data-service';
 
 interface AuthContextType {
   user: User | null;
@@ -93,12 +94,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         if (data.session?.user) {
-          setUser({
+          const supUser: User = {
             id: data.session.user.id,
             email: data.session.user.email || cleanEmail,
             name: (data.session.user.email || cleanEmail).split('@')[0],
             role: cleanEmail.includes('admin') ? 'admin' : 'advisor',
-          });
+            status: 'active',
+            createdAt: new Date().toISOString(),
+          };
+          setUser(supUser);
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(supUser));
+          saveUser(supUser);
           return { success: true };
         }
       }
@@ -122,6 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         setUser(found);
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(found));
+        saveUser(found);
         return { success: true };
       }
 
@@ -131,9 +138,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: cleanEmail.split('@')[0],
         role: cleanEmail.includes('admin') ? 'admin' : 'advisor',
         status: 'active',
+        createdAt: new Date().toISOString(),
       };
       setUser(customUser);
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(customUser));
+      saveUser(customUser);
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Login failed' };
