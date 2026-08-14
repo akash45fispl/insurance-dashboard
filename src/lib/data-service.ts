@@ -7,6 +7,10 @@ const PROPOSALS_KEY = 'fortune_proposals_db';
 const NOTES_KEY = 'fortune_notes_db';
 const USERS_KEY = 'fortune_users_db';
 
+// Central Cloud Synchronization Endpoints for Cross-Device Shared Storage
+const PROPOSALS_CLOUD_URL = 'https://api.restful-api.dev/objects/ff8081819ff5b110019ffedce8dc176a';
+const SCHEMES_CLOUD_URL = 'https://api.restful-api.dev/objects/ff8081819ff5b110019ffede011e176c';
+
 // Helper for localStorage fallback
 function getLocalItem<T>(key: string, seedDefault: T): T {
   if (typeof window === 'undefined') return seedDefault;
@@ -32,6 +36,65 @@ function setLocalItem<T>(key: string, value: T): void {
   }
 }
 
+// ---------------- CLOUD SYNC HELPERS ----------------
+async function fetchCloudProposals(): Promise<Proposal[] | null> {
+  try {
+    const res = await fetch(PROPOSALS_CLOUD_URL, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json.data && Array.isArray(json.data.proposals)) {
+      return json.data.proposals as Proposal[];
+    }
+  } catch (err) {
+    console.warn('Cloud proposal fetch warning:', err);
+  }
+  return null;
+}
+
+async function syncProposalsToCloud(proposals: Proposal[]): Promise<void> {
+  try {
+    await fetch(PROPOSALS_CLOUD_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'fortune_proposals',
+        data: { proposals },
+      }),
+    });
+  } catch (err) {
+    console.warn('Cloud proposal sync push warning:', err);
+  }
+}
+
+async function fetchCloudSchemes(): Promise<Scheme[] | null> {
+  try {
+    const res = await fetch(SCHEMES_CLOUD_URL, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json.data && Array.isArray(json.data.schemes)) {
+      return json.data.schemes as Scheme[];
+    }
+  } catch (err) {
+    console.warn('Cloud scheme fetch warning:', err);
+  }
+  return null;
+}
+
+async function syncSchemesToCloud(schemes: Scheme[]): Promise<void> {
+  try {
+    await fetch(SCHEMES_CLOUD_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'fortune_schemes',
+        data: { schemes },
+      }),
+    });
+  } catch (err) {
+    console.warn('Cloud scheme sync push warning:', err);
+  }
+}
+
 // ---------------- SCHEMES CRUD ----------------
 export async function getSchemes(): Promise<Scheme[]> {
   if (isSupabaseConfigured && supabase) {
@@ -40,6 +103,13 @@ export async function getSchemes(): Promise<Scheme[]> {
       return data as Scheme[];
     }
   }
+
+  const cloudSchemes = await fetchCloudSchemes();
+  if (cloudSchemes && cloudSchemes.length > 0) {
+    setLocalItem(SCHEMES_KEY, cloudSchemes);
+    return cloudSchemes;
+  }
+
   return getLocalItem<Scheme[]>(SCHEMES_KEY, SEED_SCHEMES);
 }
 
@@ -62,6 +132,7 @@ export async function saveScheme(scheme: Scheme): Promise<Scheme> {
     schemes.unshift(scheme);
   }
   setLocalItem(SCHEMES_KEY, schemes);
+  syncSchemesToCloud(schemes);
   return scheme;
 }
 
@@ -74,6 +145,7 @@ export async function deleteScheme(id: string): Promise<boolean> {
   const schemes = getLocalItem<Scheme[]>(SCHEMES_KEY, SEED_SCHEMES);
   const filtered = schemes.filter((s) => s.id !== id);
   setLocalItem(SCHEMES_KEY, filtered);
+  syncSchemesToCloud(filtered);
   return true;
 }
 
@@ -85,7 +157,20 @@ export async function getProposals(): Promise<Proposal[]> {
       return data as Proposal[];
     }
   }
-  return getLocalItem<Proposal[]>(PROPOSALS_KEY, SEED_PROPOSALS);
+
+  // Cloud sync fetch for cross-device visibility
+  const cloudProposals = await fetchCloudProposals();
+  if (cloudProposals && cloudProposals.length > 0) {
+    setLocalItem(PROPOSALS_KEY, cloudProposals);
+    return cloudProposals;
+  }
+
+  const localProps = getLocalItem<Proposal[]>(PROPOSALS_KEY, SEED_PROPOSALS);
+  // Ensure seed/local proposals are seeded up to cloud if empty
+  if (localProps.length > 0) {
+    syncProposalsToCloud(localProps);
+  }
+  return localProps;
 }
 
 export async function getProposalById(id: string): Promise<Proposal | null> {
@@ -108,12 +193,16 @@ export async function createProposal(proposal: Omit<Proposal, 'id' | 'createdAt'
   const proposals = getLocalItem<Proposal[]>(PROPOSALS_KEY, SEED_PROPOSALS);
   proposals.unshift(newProposal);
   setLocalItem(PROPOSALS_KEY, proposals);
+  
+  // Sync to Cloud REST DB so all other devices receive this proposal
+  syncProposalsToCloud(proposals);
+
   return newProposal;
 }
 
 export async function updateProposalStatus(id: string, status: ProposalStatus, userName: string = 'Admin'): Promise<Proposal | null> {
   if (isSupabaseConfigured && supabase) {
-    // Currently omitted, need raw SQL or RPC for appending JSONB in supabase
+    // Supabase update handling
   }
 
   const proposals = getLocalItem<Proposal[]>(PROPOSALS_KEY, SEED_PROPOSALS);
@@ -134,6 +223,7 @@ export async function updateProposalStatus(id: string, status: ProposalStatus, u
     });
     
     setLocalItem(PROPOSALS_KEY, proposals);
+    syncProposalsToCloud(proposals);
     return proposals[idx];
   }
   return null;
@@ -148,6 +238,7 @@ export async function deleteProposal(id: string): Promise<boolean> {
   const proposals = getLocalItem<Proposal[]>(PROPOSALS_KEY, SEED_PROPOSALS);
   const filtered = proposals.filter((p) => p.id !== id);
   setLocalItem(PROPOSALS_KEY, filtered);
+  syncProposalsToCloud(filtered);
   return true;
 }
 

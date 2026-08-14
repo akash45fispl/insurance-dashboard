@@ -74,17 +74,43 @@ export default function HomePage() {
     });
   };
 
-  // Load data on mount & user change
+  // Load data on mount, user change, tab focus & periodic cloud polling
   useEffect(() => {
+    let isMounted = true;
+
     async function loadData() {
-      const sList = await getSchemes();
-      const pList = await getProposals();
-      const aMetrics = await getAnalyticsMetrics();
-      setSchemes(sList);
-      setProposals(pList);
-      setAnalytics(aMetrics);
+      try {
+        const sList = await getSchemes();
+        const pList = await getProposals();
+        const aMetrics = await getAnalyticsMetrics();
+        if (isMounted) {
+          setSchemes(sList);
+          setProposals(pList);
+          setAnalytics(aMetrics);
+        }
+      } catch (err) {
+        console.error('Error fetching synced cloud data:', err);
+      }
     }
+
     loadData();
+
+    // Auto-refresh proposals every 8 seconds across systems
+    const timer = setInterval(() => {
+      loadData();
+    }, 8000);
+
+    const handleFocus = () => {
+      loadData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [user]);
 
   // Auth Protection guard
