@@ -191,25 +191,25 @@ export const AdvisorReportsView: React.FC<AdvisorReportsViewProps> = ({
       case 'Created':
         return <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1"><Clock className="w-3 h-3 text-slate-500 dark:text-slate-400" /> Created</span>;
       case 'Sent to Client':
-        return <span className="bg-blue-50 dark:bg-blue-900/50 text-blue-700 border border-blue-300 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1"><Send className="w-3 h-3 text-blue-600 dark:text-blue-400" /> Sent</span>;
+        return <span className="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/60 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1"><Send className="w-3 h-3 text-blue-600 dark:text-blue-400" /> Sent</span>;
       case 'Accepted':
-        return <span className="bg-amber-50 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-amber-600" /> Accepted</span>;
+        return <span className="bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800/60 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-amber-600 dark:text-amber-400" /> Accepted</span>;
       case 'Purchased':
-        return <span className="bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 border border-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> Purchased</span>;
+        return <span className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Purchased</span>;
       case 'Declined':
-        return <span className="bg-rose-50 dark:bg-rose-900/40 text-rose-700 border border-rose-300 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1"><XCircle className="w-3 h-3 text-rose-600" /> Declined</span>;
+        return <span className="bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800/60 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1"><XCircle className="w-3 h-3 text-rose-600 dark:text-rose-400" /> Declined</span>;
     }
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm mb-8">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm mb-8">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Advisor & Client Reports Audit Matrix</h2>
-            <span className="bg-purple-100 text-purple-800 font-bold text-xs px-2.5 py-0.5 rounded-full">
+            <span className="bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-bold text-xs px-2.5 py-0.5 rounded-full">
               {advisorGroups.length} Active Advisors Tracked
             </span>
           </div>
@@ -221,7 +221,7 @@ export const AdvisorReportsView: React.FC<AdvisorReportsViewProps> = ({
         {/* Excel Export Button */}
         <button
           onClick={exportToExcel}
-          className="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 px-4 rounded-xl shadow-sm flex items-center gap-2 transition-all shrink-0"
+          className="bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold text-xs py-2.5 px-4 rounded-xl border border-slate-800 dark:border-slate-700 shadow-sm flex items-center gap-2 transition-all shrink-0"
         >
           <Download className="w-4 h-4 text-emerald-400" />
           Export Excel Report
@@ -230,33 +230,33 @@ export const AdvisorReportsView: React.FC<AdvisorReportsViewProps> = ({
 
       {/* Summary KPI Cards Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-blue-50/60 dark:bg-blue-900/40 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
+        <div className="bg-blue-50/70 dark:bg-blue-950/50 p-4 rounded-xl border border-blue-100 dark:border-blue-800/60">
           <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase block">Total Advisors</span>
-          <span className="text-2xl font-extrabold text-blue-900 dark:text-blue-100 block mt-1">{advisorGroups.length}</span>
+          <span className="text-2xl font-extrabold text-blue-900 dark:text-blue-200 block mt-1">{advisorGroups.length}</span>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Advisors with generated reports</span>
         </div>
 
-        <div className="bg-emerald-50/60 p-4 rounded-xl border border-emerald-100">
-          <span className="text-xs text-emerald-600 font-semibold uppercase block">Total Reports Generated</span>
-          <span className="text-2xl font-extrabold text-emerald-900 block mt-1">{totalReportsCount}</span>
+        <div className="bg-emerald-50/70 dark:bg-emerald-950/50 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/60">
+          <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold uppercase block">Total Reports Generated</span>
+          <span className="text-2xl font-extrabold text-emerald-900 dark:text-emerald-200 block mt-1">{totalReportsCount}</span>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Proposals created for clients</span>
         </div>
 
-        <div className="bg-purple-50/60 p-4 rounded-xl border border-purple-100">
-          <span className="text-xs text-purple-600 font-semibold uppercase block">Conversion Rate</span>
-          <span className="text-2xl font-extrabold text-purple-900 block mt-1">{overallConversion}%</span>
+        <div className="bg-purple-50/70 dark:bg-purple-950/50 p-4 rounded-xl border border-purple-100 dark:border-purple-800/60">
+          <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold uppercase block">Conversion Rate</span>
+          <span className="text-2xl font-extrabold text-purple-900 dark:text-purple-200 block mt-1">{overallConversion}%</span>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 block">{totalPurchased} closed / purchased</span>
         </div>
 
-        <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-100">
-          <span className="text-xs text-amber-700 font-semibold uppercase block">Total Premium Volume</span>
-          <span className="text-2xl font-extrabold text-amber-900 block mt-1">₹{(totalVolume / 1000).toFixed(1)}k</span>
+        <div className="bg-amber-50/70 dark:bg-amber-950/50 p-4 rounded-xl border border-amber-100 dark:border-amber-800/60">
+          <span className="text-xs text-amber-700 dark:text-amber-400 font-semibold uppercase block">Total Premium Volume</span>
+          <span className="text-2xl font-extrabold text-amber-900 dark:text-amber-200 block mt-1">₹{(totalVolume / 1000).toFixed(1)}k</span>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Gross written premium value</span>
         </div>
       </div>
 
       {/* Multi-Dimensional Filter Controls Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-6 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-6 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
         
         {/* Search */}
         <div className="md:col-span-3 relative">
@@ -268,7 +268,7 @@ export const AdvisorReportsView: React.FC<AdvisorReportsViewProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search person or client..."
-              className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-xs focus:outline-none focus:border-blue-500"
+              className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
             />
           </div>
         </div>
@@ -338,7 +338,7 @@ export const AdvisorReportsView: React.FC<AdvisorReportsViewProps> = ({
 
       {/* Advisor & Client Report Cards Table */}
       {advisorGroups.length === 0 ? (
-        <div className="text-center py-12 bg-slate-50 dark:bg-slate-800 rounded-xl border border-dashed border-slate-300 dark:border-slate-600">
+        <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
           <Users className="w-10 h-10 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No advisor reports found matching selected filters</p>
           <p className="text-xs text-slate-500 dark:text-slate-400">Try changing your Year, Month, or Date Range filter options.</p>
@@ -354,13 +354,13 @@ export const AdvisorReportsView: React.FC<AdvisorReportsViewProps> = ({
             return (
               <div 
                 key={group.advisorName}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden shadow-sm hover:border-slate-300 dark:border-slate-600 transition-all"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all"
               >
                 
                 {/* Advisor Row Banner */}
                 <div 
                   onClick={() => setExpandedAdvisor(isExpanded ? null : group.advisorName)}
-                  className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer bg-gradient-to-r from-slate-50 to-slate-100/50 hover:bg-blue-50/40 dark:bg-blue-900/30 transition-colors"
+                  className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer bg-slate-50/80 dark:bg-slate-800/70 hover:bg-blue-50/40 dark:hover:bg-slate-800 transition-colors"
                 >
                   
                   {/* Advisor Info */}
@@ -376,7 +376,7 @@ export const AdvisorReportsView: React.FC<AdvisorReportsViewProps> = ({
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Generated <strong className="text-blue-700 font-bold">{group.proposals.length} Reports</strong> across selected timeline
+                        Generated <strong className="text-blue-700 dark:text-blue-400 font-bold">{group.proposals.length} Reports</strong> across selected timeline
                       </p>
                     </div>
                   </div>
@@ -391,22 +391,22 @@ export const AdvisorReportsView: React.FC<AdvisorReportsViewProps> = ({
 
                     <div className="bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center gap-1.5">
                       <span className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">Sent:</span>
-                      <span className="font-bold text-blue-700">{group.statusCounts['Sent to Client'] || 0}</span>
+                      <span className="font-bold text-blue-700 dark:text-blue-300">{group.statusCounts['Sent to Client'] || 0}</span>
                     </div>
                     
-                    <div className="bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200 shadow-2xs flex items-center gap-1.5">
-                      <span className="text-[11px] text-amber-700 font-medium">Accepted:</span>
-                      <span className="font-bold text-amber-800">{group.statusCounts['Accepted'] || 0}</span>
+                    <div className="bg-amber-50 dark:bg-amber-950/60 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800/60 shadow-2xs flex items-center gap-1.5">
+                      <span className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">Accepted:</span>
+                      <span className="font-bold text-amber-800 dark:text-amber-300">{group.statusCounts['Accepted'] || 0}</span>
                     </div>
 
-                    <div className="bg-emerald-50 dark:bg-emerald-900/40 px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs flex items-center gap-1.5">
-                      <span className="text-[11px] text-emerald-700 font-medium">Purchased:</span>
-                      <span className="font-bold text-emerald-800">{group.statusCounts['Purchased'] || 0}</span>
+                    <div className="bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 shadow-2xs flex items-center gap-1.5">
+                      <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">Purchased:</span>
+                      <span className="font-bold text-emerald-800 dark:text-emerald-300">{group.statusCounts['Purchased'] || 0}</span>
                     </div>
 
-                    <div className="bg-rose-50 dark:bg-rose-900/40 px-3 py-1.5 rounded-xl border border-rose-200 shadow-2xs flex items-center gap-1.5">
-                      <span className="text-[11px] text-rose-600 font-medium">Declined:</span>
-                      <span className="font-bold text-rose-700">{group.statusCounts['Declined'] || 0}</span>
+                    <div className="bg-rose-50 dark:bg-rose-950/60 px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-800/60 shadow-2xs flex items-center gap-1.5">
+                      <span className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">Declined:</span>
+                      <span className="font-bold text-rose-700 dark:text-rose-300">{group.statusCounts['Declined'] || 0}</span>
                     </div>
 
                     <div className="bg-purple-900 text-white px-3 py-1.5 rounded-xl shadow-2xs font-bold text-xs flex items-center gap-1">
@@ -424,8 +424,8 @@ export const AdvisorReportsView: React.FC<AdvisorReportsViewProps> = ({
 
                 {/* Collapsible Client Proposals Detail List */}
                 {isExpanded && (
-                  <div className="border-t border-slate-200 dark:border-slate-700 p-5 bg-white dark:bg-slate-900 space-y-3">
-                    <div className="flex items-center justify-between pb-2 border-b border-slate-100 text-xs">
+                  <div className="border-t border-slate-200 dark:border-slate-800 p-5 bg-white dark:bg-slate-900 space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 text-xs">
                       <span className="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px]">
                         Detailed Client Proposals Generated by {group.advisorName} ({group.proposals.length})
                       </span>
@@ -437,7 +437,7 @@ export const AdvisorReportsView: React.FC<AdvisorReportsViewProps> = ({
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead>
-                          <tr className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] border-b border-slate-200 dark:border-slate-700">
+                          <tr className="bg-slate-50 dark:bg-slate-800/90 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] border-b border-slate-200 dark:border-slate-800">
                             <th className="py-2.5 px-3">Client Name</th>
                             <th className="py-2.5 px-3">Proposal Title</th>
                             <th className="py-2.5 px-3">City & Family</th>
@@ -447,48 +447,37 @@ export const AdvisorReportsView: React.FC<AdvisorReportsViewProps> = ({
                             <th className="py-2.5 px-3 text-center">Action</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                           {group.proposals.map((p) => (
-                            <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                              
-                              <td className="py-3 px-3">
-                                <div className="font-bold text-slate-900 dark:text-slate-100">{p.client.name}</div>
-                                <div className="text-[10px] text-slate-400 dark:text-slate-500">Age {p.client.age}</div>
+                            <tr key={p.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                              <td className="py-3 px-3 font-bold text-slate-900 dark:text-slate-100">
+                                {p.client.name} ({p.client.age})
                               </td>
-
-                              <td className="py-3 px-3 font-semibold text-blue-900 dark:text-blue-100">
+                              <td className="py-3 px-3 font-semibold text-slate-800 dark:text-slate-200">
                                 {p.name}
                               </td>
-
-                              <td className="py-3 px-3 text-slate-600 dark:text-slate-300">
-                                <div>{p.client.city}</div>
-                                <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[140px]">{p.client.family}</div>
+                              <td className="py-3 px-3 text-slate-600 dark:text-slate-400">
+                                {p.client.city} • {p.client.family}
                               </td>
-
-                              <td className="py-3 px-3 text-slate-600 dark:text-slate-300 font-mono text-[11px]">
+                              <td className="py-3 px-3 text-slate-500 dark:text-slate-400 font-mono">
                                 {p.date}
                               </td>
-
                               <td className="py-3 px-3">
                                 {getStatusBadge(p.status)}
                               </td>
-
-                              <td className="py-3 px-3 text-right font-bold text-slate-900 dark:text-slate-100">
-                                ₹{((p.totalPremium || 35000)).toLocaleString('en-IN')}
+                              <td className="py-3 px-3 text-right font-extrabold text-slate-900 dark:text-slate-100">
+                                ₹{(p.totalPremium || 35000).toLocaleString('en-IN')}
                               </td>
-
                               <td className="py-3 px-3 text-center">
                                 {onViewProposalDoc && (
                                   <button
                                     onClick={() => onViewProposalDoc(p)}
-                                    className="p-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 hover:bg-blue-50 dark:bg-blue-900/50 rounded-lg transition-colors inline-flex items-center gap-1 font-semibold text-[11px]"
-                                    title="View Proposal Document"
+                                    className="px-2.5 py-1 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 rounded-lg text-[11px] font-bold transition-all border border-blue-200 dark:border-blue-800/60 inline-flex items-center gap-1"
                                   >
-                                    <Eye className="w-3.5 h-3.5" /> View
+                                    <Eye className="w-3 h-3" /> View Doc
                                   </button>
                                 )}
                               </td>
-
                             </tr>
                           ))}
                         </tbody>
