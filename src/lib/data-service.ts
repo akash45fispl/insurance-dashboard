@@ -8,9 +8,25 @@ const NOTES_KEY = 'fortune_notes_db';
 const USERS_KEY = 'fortune_users_db';
 
 // ---------------- SANITIZATION & DEFENSIVE DATA GUARDS ----------------
+export function isDemoProposal(p: any): boolean {
+  if (!p) return true;
+  const id = (p.id || '').toLowerCase();
+  const createdBy = (p.createdBy || '').toLowerCase();
+  const createdByDisplay = (p.createdByDisplay || '').toLowerCase();
+  const clientAdvisor = (p.client?.advisor || '').toLowerCase();
+
+  if (id === 'prop-101' || id === 'prop-102' || id === 'prop-103') return true;
+  if (createdBy.includes('rahul') || createdBy.includes('priya')) return true;
+  if (createdByDisplay.includes('rahul') || createdByDisplay.includes('priya')) return true;
+  if (clientAdvisor.includes('rahul') || clientAdvisor.includes('priya')) return true;
+
+  return false;
+}
+
 export function sanitizeProposal(p: any): Proposal | null {
   if (!p || typeof p !== 'object') return null;
   if (!p.id || typeof p.id !== 'string') return null;
+  if (isDemoProposal(p)) return null;
 
   return {
     id: p.id,
@@ -248,14 +264,17 @@ export async function getProposals(): Promise<Proposal[]> {
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.from('proposals').select('*').order('created_at', { ascending: false });
       if (!error && data && data.length > 0) {
-        return data.map(sanitizeProposal).filter((p: Proposal | null): p is Proposal => p !== null);
+        const supProps = data.map(sanitizeProposal).filter((p: Proposal | null): p is Proposal => p !== null);
+        setLocalItem(PROPOSALS_KEY, supProps);
+        return supProps;
       }
     }
 
     const serverProps = await fetchServerProposals();
-    if (serverProps && serverProps.length > 0) {
-      setLocalItem(PROPOSALS_KEY, serverProps);
-      return serverProps;
+    if (serverProps) {
+      const cleanServerProps = serverProps.filter((p) => !isDemoProposal(p));
+      setLocalItem(PROPOSALS_KEY, cleanServerProps);
+      return cleanServerProps;
     }
   } catch (err) {
     console.error('getProposals error:', err);
@@ -263,9 +282,8 @@ export async function getProposals(): Promise<Proposal[]> {
 
   const rawLocal = getLocalItem<any[]>(PROPOSALS_KEY, SEED_PROPOSALS);
   const sanitized = rawLocal.map(sanitizeProposal).filter((p: Proposal | null): p is Proposal => p !== null);
-  if (sanitized.length > 0) {
-    syncProposalsToServer(sanitized);
-  }
+  setLocalItem(PROPOSALS_KEY, sanitized);
+  syncProposalsToServer(sanitized);
   return sanitized;
 }
 

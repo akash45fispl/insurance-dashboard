@@ -45,11 +45,25 @@ export const ClientProposals: React.FC<ClientProposalsProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [advisorFilter, setAdvisorFilter] = useState<string>('all');
 
-  // Extract unique advisors safely
-  const advisors = Array.from(new Set(proposals.map((p) => p.createdByDisplay || p.createdBy || 'Advisor')));
-
-  const filteredProposals = proposals.filter((p) => {
+  const cleanProposals = proposals.filter((p) => {
     if (!p) return false;
+    const pId = (p.id || '').toLowerCase();
+    const createdBy = (p.createdBy || '').toLowerCase();
+    const createdByDisplay = (p.createdByDisplay || '').toLowerCase();
+    const clientAdvisor = (p.client?.advisor || '').toLowerCase();
+
+    if (pId === 'prop-101' || pId === 'prop-102' || pId === 'prop-103') return false;
+    if (createdBy.includes('rahul') || createdBy.includes('priya')) return false;
+    if (createdByDisplay.includes('rahul') || createdByDisplay.includes('priya')) return false;
+    if (clientAdvisor.includes('rahul') || clientAdvisor.includes('priya')) return false;
+
+    return true;
+  });
+
+  // Extract unique advisors safely
+  const advisors = Array.from(new Set(cleanProposals.map((p) => p.createdByDisplay || p.createdBy || 'Advisor')));
+
+  const filteredProposals = cleanProposals.filter((p) => {
     const pCreatedBy = (p.createdBy || '').toLowerCase();
     const pCreatedByDisplay = (p.createdByDisplay || '').toLowerCase();
     const userEmail = (user?.email || '').toLowerCase();
