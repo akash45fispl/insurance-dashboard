@@ -13,15 +13,54 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ success: boolean; message: string }>;
   switchRole: (role: Role) => void;
   isAdmin: boolean;
+  verifyAdminPassword: (password: string) => boolean;
+  changeAdminPassword: (currentPassword: string, newPassword: string) => { success: boolean; error?: string };
+  resetAdminPasswordToDefault: () => void;
 }
 
 const AUTH_STORAGE_KEY = 'fortune_active_user_session';
+const ADMIN_PASSWORD_STORAGE_KEY = 'fortune_admin_switch_password';
+const DEFAULT_ADMIN_PASSWORD = 'Evolve@26';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Ensure default admin password is set if not already present
+    if (typeof window !== 'undefined' && !localStorage.getItem(ADMIN_PASSWORD_STORAGE_KEY)) {
+      localStorage.setItem(ADMIN_PASSWORD_STORAGE_KEY, DEFAULT_ADMIN_PASSWORD);
+    }
+  }, []);
+
+  const getAdminPassword = (): string => {
+    if (typeof window === 'undefined') return DEFAULT_ADMIN_PASSWORD;
+    return localStorage.getItem(ADMIN_PASSWORD_STORAGE_KEY) || DEFAULT_ADMIN_PASSWORD;
+  };
+
+  const verifyAdminPassword = (password: string): boolean => {
+    const current = getAdminPassword();
+    return password === current;
+  };
+
+  const changeAdminPassword = (currentPassword: string, newPassword: string): { success: boolean; error?: string } => {
+    if (!verifyAdminPassword(currentPassword)) {
+      return { success: false, error: 'Current admin password is incorrect.' };
+    }
+    if (!newPassword || newPassword.trim().length < 4) {
+      return { success: false, error: 'New password must be at least 4 characters.' };
+    }
+    localStorage.setItem(ADMIN_PASSWORD_STORAGE_KEY, newPassword.trim());
+    return { success: true };
+  };
+
+  const resetAdminPasswordToDefault = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(ADMIN_PASSWORD_STORAGE_KEY, DEFAULT_ADMIN_PASSWORD);
+    }
+  };
 
   useEffect(() => {
     // Check saved session in localStorage or Supabase
@@ -145,6 +184,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetPassword,
         switchRole,
         isAdmin: user?.role === 'admin',
+        verifyAdminPassword,
+        changeAdminPassword,
+        resetAdminPasswordToDefault,
       }}
     >
       {children}

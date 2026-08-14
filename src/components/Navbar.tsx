@@ -22,6 +22,8 @@ import {
   Star
 } from 'lucide-react';
 
+import { AdminPasswordModal } from './AdminPasswordModal';
+
 interface NavbarProps {
   activeView: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings';
   setActiveView: (view: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings') => void;
@@ -39,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const { user, logout, switchRole, isAdmin } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -178,9 +181,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                   
                   {/* Quick Role Switcher Chip */}
                   <button
-                    onClick={() => switchRole(isAdmin ? 'advisor' : 'admin')}
+                    onClick={() => {
+                      if (isAdmin) {
+                        switchRole('advisor');
+                      } else {
+                        setIsAdminModalOpen(true);
+                      }
+                    }}
                     className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-400/40 hover:bg-purple-500/30 transition-all"
-                    title="Click to switch access role"
+                    title="Click to switch access role (requires Admin password)"
                   >
                     Role: {user.role} ⟳
                   </button>
@@ -261,6 +270,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         </div>
       </div>
+
+      {/* Admin Password Protection Modal */}
+      <AdminPasswordModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        onSuccess={() => switchRole('admin')}
+      />
     </header>
   );
 };
