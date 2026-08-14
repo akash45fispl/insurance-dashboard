@@ -160,7 +160,7 @@ export const ProposalDetailView: React.FC<ProposalDetailViewProps> = ({
             <div className="flex items-center justify-between pb-8 border-b border-slate-800">
               <div className="flex items-center gap-3">
                 <img 
-                  src="/logo.jpeg" 
+                  src="/logo.png" 
                   alt="Fortune Investment Services" 
                   className="h-12 w-auto bg-white rounded p-1 shadow-lg" 
                 />
@@ -476,7 +476,7 @@ export const ProposalDetailView: React.FC<ProposalDetailViewProps> = ({
           {/* ================= FOOTER & COMPLIANCE DISCLAIMER ================= */}
           <footer className="pt-8 border-t border-slate-200 text-center space-y-3">
             <div className="flex items-center justify-center gap-2">
-              <img src="/logo.jpeg" alt="Fortune" className="h-6 w-auto object-contain" />
+              <img src="/logo.png" alt="Fortune" className="h-6 w-auto object-contain" />
               <span className="font-bold text-slate-900 text-sm">Fortune Investment Services Pvt Ltd</span>
             </div>
             <p className="text-[11px] text-slate-500 max-w-2xl mx-auto leading-relaxed">

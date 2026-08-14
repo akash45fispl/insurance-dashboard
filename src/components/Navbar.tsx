@@ -89,7 +89,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => handleSelectView('dashboard')}
           >
             <img 
-              src="/logo.jpeg" 
+              src="/logo.png" 
               alt="Fortune Investment Services" 
               className="h-10 w-auto object-contain bg-white rounded p-1"
             />
