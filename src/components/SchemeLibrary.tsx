@@ -30,6 +30,7 @@ interface SchemeLibraryProps {
   onToggleCompare: (schemeId: string) => void;
   compareIds: string[];
   onCreateProposalWithScheme?: (scheme: Scheme) => void;
+  onCreateProposalFromCompare?: (compareIds: string[]) => void;
   onEditScheme?: (scheme: Scheme) => void;
   onAddNewScheme?: () => void;
   onDeleteScheme?: (schemeId: string) => void;
@@ -43,6 +44,7 @@ export const SchemeLibrary: React.FC<SchemeLibraryProps> = ({
   onToggleCompare,
   compareIds,
   onCreateProposalWithScheme,
+  onCreateProposalFromCompare,
   onEditScheme,
   onAddNewScheme,
   onDeleteScheme,
@@ -174,16 +176,27 @@ export const SchemeLibrary: React.FC<SchemeLibraryProps> = ({
         const activeCat = schemes.find(s => compareIds.includes(s.id))?.category;
         if (!activeCat) return null;
         return (
-          <div className="p-3.5 bg-indigo-950/80 border border-indigo-500/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-indigo-200 mb-6 shadow-sm">
+          <div className="p-3.5 bg-indigo-950/90 border border-indigo-500/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-indigo-200 mb-6 shadow-md">
             <div className="flex items-center gap-2 font-semibold">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
               <span>
-                Comparison Matrix Locked to: <strong className="text-white uppercase font-extrabold tracking-wide">{activeCat} Policies ({compareIds.length}/4)</strong>
+                Comparison Matrix Active: <strong className="text-white uppercase font-extrabold tracking-wide">{activeCat} Policies ({compareIds.length}/4)</strong>
               </span>
             </div>
-            <span className="text-[11px] text-indigo-300 font-medium">
-              Only {activeCat.toUpperCase()} insurance policies can be selected to compare.
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-indigo-300 font-medium hidden md:inline">
+                Locked to {activeCat.toUpperCase()}
+              </span>
+              {onCreateProposalFromCompare && (
+                <button
+                  onClick={() => onCreateProposalFromCompare(compareIds)}
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 shadow-sm transition-all"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Send {compareIds.length} Schemes as Proposal</span>
+                </button>
+              )}
+            </div>
           </div>
         );
       })()}

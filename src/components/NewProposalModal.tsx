@@ -11,6 +11,7 @@ interface NewProposalModalProps {
   onClose: () => void;
   onSaveProposal: (proposalData: Omit<Proposal, 'id' | 'createdAt'>) => void;
   preSelectedScheme?: Scheme | null;
+  initialCompareIds?: string[];
 }
 
 export const NewProposalModal: React.FC<NewProposalModalProps> = ({
@@ -18,7 +19,8 @@ export const NewProposalModal: React.FC<NewProposalModalProps> = ({
   isOpen,
   onClose,
   onSaveProposal,
-  preSelectedScheme
+  preSelectedScheme,
+  initialCompareIds = [],
 }) => {
   const { user } = useAuth();
   
@@ -38,9 +40,19 @@ export const NewProposalModal: React.FC<NewProposalModalProps> = ({
   ]);
 
   // Selected scheme IDs
-  const [selectedSchemeIds, setSelectedSchemeIds] = useState<string[]>(
-    preSelectedScheme ? [preSelectedScheme.id] : ['star-assure', 'hdfc-optima-secure']
-  );
+  const [selectedSchemeIds, setSelectedSchemeIds] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      if (preSelectedScheme) {
+        setSelectedSchemeIds([preSelectedScheme.id]);
+      } else if (initialCompareIds && initialCompareIds.length > 0) {
+        setSelectedSchemeIds(initialCompareIds);
+      } else {
+        setSelectedSchemeIds(schemes.slice(0, 2).map((s) => s.id));
+      }
+    }
+  }, [isOpen, preSelectedScheme, initialCompareIds, schemes]);
 
   if (!isOpen) return null;
 

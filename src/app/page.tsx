@@ -400,6 +400,10 @@ export default function HomePage() {
                 setPreSelectedSchemeForProp(sch);
                 setProposalModalOpen(true);
               }}
+              onCreateProposalFromCompare={() => {
+                setPreSelectedSchemeForProp(null);
+                setProposalModalOpen(true);
+              }}
               onOpenCalculator={handleOpenCalculator}
               isAdmin={isAdmin}
             />
@@ -443,6 +447,10 @@ export default function HomePage() {
               onClearCompare={() => setCompareIds([])}
               onSelectScheme={handleSelectScheme}
               onAddIdToCompare={handleToggleCompare}
+              onCreateProposalFromCompare={() => {
+                setPreSelectedSchemeForProp(null);
+                setProposalModalOpen(true);
+              }}
             />
           </div>
         )}
@@ -506,6 +514,7 @@ export default function HomePage() {
         onClose={() => setProposalModalOpen(false)}
         onSaveProposal={handleSaveProposal}
         preSelectedScheme={preSelectedSchemeForProp}
+        initialCompareIds={compareIds}
       />
 
       {/* Admin Scheme Edit / Add Modal */}
