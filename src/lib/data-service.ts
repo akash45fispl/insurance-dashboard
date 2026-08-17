@@ -197,25 +197,43 @@ async function syncSchemesToServer(schemes: Scheme[]): Promise<void> {
 
 // ---------------- SCHEMES CRUD ----------------
 export async function getSchemes(): Promise<Scheme[]> {
+  const rawLocal = getLocalItem<any[]>(SCHEMES_KEY, SEED_SCHEMES);
+  const localSchemes = rawLocal.map(sanitizeScheme).filter((s: Scheme | null): s is Scheme => s !== null);
+
   try {
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.from('schemes').select('*');
       if (!error && data && data.length > 0) {
-        return data.map(sanitizeScheme).filter((s: Scheme | null): s is Scheme => s !== null);
+        const sanitized = data.map(sanitizeScheme).filter((s: Scheme | null): s is Scheme => s !== null);
+        setLocalItem(SCHEMES_KEY, sanitized);
+        return sanitized;
       }
     }
 
     const serverSchemes = await fetchServerSchemes();
     if (serverSchemes && serverSchemes.length > 0) {
-      setLocalItem(SCHEMES_KEY, serverSchemes);
-      return serverSchemes;
+      const mergedSchemes = serverSchemes.map((sServer) => {
+        const matchingLocal = localSchemes.find((l) => l.id === sServer.id);
+        if (matchingLocal?.logoUrl && !sServer.logoUrl) {
+          return { ...sServer, logoUrl: matchingLocal.logoUrl };
+        }
+        return sServer;
+      });
+
+      localSchemes.forEach((localItem) => {
+        if (!mergedSchemes.some((s) => s.id === localItem.id)) {
+          mergedSchemes.unshift(localItem);
+        }
+      });
+
+      setLocalItem(SCHEMES_KEY, mergedSchemes);
+      return mergedSchemes;
     }
   } catch (err) {
     console.error('getSchemes error:', err);
   }
 
-  const rawLocal = getLocalItem<any[]>(SCHEMES_KEY, SEED_SCHEMES);
-  return rawLocal.map(sanitizeScheme).filter((s: Scheme | null): s is Scheme => s !== null);
+  return localSchemes;
 }
 
 export async function getSchemeById(id: string): Promise<Scheme | null> {
