@@ -50,9 +50,19 @@ export interface TargetProfile {
 export interface PremiumCalculatorParams {
   sumInsuredAmount: number; // e.g. 500000, 1000000, 2500000, 5000000, 10000000
   primaryAge: number; // e.g. 30
-  policyType: 'individual' | 'floater_1a1c' | 'floater_2a' | 'floater_2a2c';
+  policyType: 'individual' | 'floater_1a1c' | 'floater_2a' | 'floater_2a2c' | 'Individual' | 'Floater';
   tenureYears: 1 | 2 | 3;
-  selectedRiders: string[]; // e.g. ['critical_illness', 'hospital_cash', 'ncb_super', 'opd_cover']
+  selectedRiders: string[]; // e.g. ['Maternity', 'CriticalIllness', 'RoomRentWaiver', 'OPD']
+  zone?: string;
+  pincode?: string;
+  city?: string;
+  preExistingConditions?: string[];
+  isSmoker?: boolean;
+  alcohol?: string;
+  bmi?: number;
+  occupationRisk?: string;
+  deductibleCopay?: string;
+  activeLifestyleRebate?: boolean;
 }
 
 export interface CalculatedPremiumDetails {
@@ -70,6 +80,10 @@ export interface CalculatedPremiumDetails {
   insurerId?: string;
   insurerName?: string;
   planName?: string;
+  medicalTestRequired?: boolean;
+  warnings?: string[];
+  effectiveRebatePremium?: number;
+  effectiveRebateMonthly?: number;
 }
 
 export interface Scheme {

@@ -335,59 +335,145 @@ export const ProposalDetailView: React.FC<ProposalDetailViewProps> = ({
                         </div>
                       </div>
 
-                      {/* Calculated Premium Breakdown Matrix if available */}
+                      {/* Comprehensive Premium Calculation & Actuarial Rating Breakdown */}
                       {calcDetails && (
-                        <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-4 rounded-xl space-y-3 text-xs border border-slate-800">
-                          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                            <span className="font-bold text-emerald-400 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
-                              <Calculator className="w-3.5 h-3.5 text-emerald-400" /> Insurer Rating Breakdown
-                            </span>
-                            <span className="text-[10px] text-slate-300 font-mono">
-                              Tenure: {calcDetails.parameters?.tenureYears || 1} Yr | GST 18% Included
-                            </span>
+                        <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-indigo-950 text-white p-5 rounded-2xl space-y-4 text-xs border border-slate-800 shadow-lg">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-3 gap-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-extrabold text-teal-400 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                                  <Calculator className="w-4 h-4 text-teal-400" /> Insurer Rating & Actuarial Breakdown
+                                </span>
+                                <span className="text-[10px] bg-teal-500/20 text-teal-300 font-bold px-2 py-0.5 rounded border border-teal-400/30 uppercase">
+                                  {calcDetails.insurerName || s.insurer}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-400 mt-0.5">Transparent rate calculation based on client underwriting parameters</p>
+                            </div>
+                            
+                            <div className="text-right">
+                              <span className="text-[11px] font-extrabold text-emerald-400 block">
+                                Final Annual: ₹{calcDetails.netAnnualPremium.toLocaleString('en-IN')}
+                              </span>
+                              <span className="text-[10px] text-slate-400 block">
+                                Est. ₹{calcDetails.monthlyEmi.toLocaleString('en-IN')}/mo (GST 18% Incl.)
+                              </span>
+                            </div>
                           </div>
 
-                          {/* Plain Language Math Equation if available */}
+                          {/* Rating Parameters Summary Pills */}
+                          {calcDetails.parameters && (
+                            <div className="flex flex-wrap items-center gap-1.5 bg-slate-900/80 p-2.5 rounded-xl border border-slate-800/80 text-[10px]">
+                              <span className="font-bold text-slate-400">Underwriting Profile:</span>
+                              <span className="bg-slate-800 text-slate-200 px-2 py-0.5 rounded font-semibold">
+                                Cover: ₹{calcDetails.parameters.sumInsuredAmount >= 10000000 ? '1 Cr' : `${calcDetails.parameters.sumInsuredAmount / 100000}L`}
+                              </span>
+                              {calcDetails.parameters.zone && (
+                                <span className="bg-purple-950 text-purple-300 px-2 py-0.5 rounded font-semibold border border-purple-800/60">
+                                  Zone: {calcDetails.parameters.zone}
+                                </span>
+                              )}
+                              <span className="bg-slate-800 text-slate-200 px-2 py-0.5 rounded font-semibold">
+                                Tenure: {calcDetails.parameters.tenureYears} Yr{calcDetails.parameters.tenureYears > 1 ? 's' : ''}
+                              </span>
+                              {calcDetails.parameters.preExistingConditions && calcDetails.parameters.preExistingConditions.length > 0 ? (
+                                <span className="bg-rose-950 text-rose-300 px-2 py-0.5 rounded font-semibold border border-rose-800/60">
+                                  PED: {calcDetails.parameters.preExistingConditions.join(', ')}
+                                </span>
+                              ) : (
+                                <span className="bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded font-semibold border border-emerald-800/60">
+                                  PED: None (Healthy)
+                                </span>
+                              )}
+                              {calcDetails.parameters.isSmoker && (
+                                <span className="bg-amber-950 text-amber-300 px-2 py-0.5 rounded font-semibold border border-amber-800/60">
+                                  Tobacco User (+10%)
+                                </span>
+                              )}
+                              {calcDetails.parameters.bmi && (
+                                <span className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-semibold">
+                                  BMI: {calcDetails.parameters.bmi}
+                                </span>
+                              )}
+                              {calcDetails.parameters.deductibleCopay && calcDetails.parameters.deductibleCopay !== 'None' && (
+                                <span className="bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded font-semibold border border-indigo-800/60">
+                                  Copay: {calcDetails.parameters.deductibleCopay}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Plain Language Math Equation */}
                           {calcDetails.breakdownFormula && (
-                            <div className="bg-slate-950/90 p-2.5 rounded-lg font-mono text-[11px] text-emerald-300 border border-slate-800/80 leading-relaxed overflow-x-auto">
+                            <div className="bg-slate-950 p-3 rounded-xl font-mono text-[11px] text-emerald-300 border border-slate-800 leading-relaxed overflow-x-auto">
+                              <span className="text-[10px] text-slate-400 block uppercase font-sans font-bold mb-0.5">Rating Formula Equation:</span>
                               {calcDetails.breakdownFormula}
                             </div>
                           )}
 
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-1">
-                            <div className="bg-slate-800/60 p-2 rounded-lg">
-                              <span className="text-[10px] text-slate-400 block">Base Rate:</span>
-                              <span className="font-bold text-white">₹{calcDetails.basePremium.toLocaleString('en-IN')}</span>
+                          {/* Financial Components Matrix */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                              <span className="text-[10px] text-slate-400 block font-medium">Base Risk Rate:</span>
+                              <span className="font-bold text-white text-xs sm:text-sm">₹{calcDetails.basePremium.toLocaleString('en-IN')}</span>
                             </div>
-                            <div className="bg-slate-800/60 p-2 rounded-lg">
-                              <span className="text-[10px] text-slate-400 block">Riders / Loadings:</span>
-                              <span className="font-bold text-rose-300">+₹{(calcDetails.riderPremium || 0).toLocaleString('en-IN')}</span>
+
+                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                              <span className="text-[10px] text-slate-400 block font-medium">Riders / Loadings:</span>
+                              <span className="font-bold text-rose-300 text-xs sm:text-sm">+₹{(calcDetails.riderPremium || 0).toLocaleString('en-IN')}</span>
                             </div>
-                            <div className="bg-slate-800/60 p-2 rounded-lg">
-                              <span className="text-[10px] text-slate-400 block">GST Tax (18%):</span>
-                              <span className="font-bold text-amber-300">+₹{calcDetails.taxGst.toLocaleString('en-IN')}</span>
+
+                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                              <span className="text-[10px] text-slate-400 block font-medium">GST Tax (18%):</span>
+                              <span className="font-bold text-amber-300 text-xs sm:text-sm">+₹{calcDetails.taxGst.toLocaleString('en-IN')}</span>
                             </div>
-                            <div className="bg-slate-800/60 p-2 rounded-lg">
-                              <span className="text-[10px] text-slate-400 block">Final Annual Premium:</span>
-                              <span className="font-extrabold text-emerald-400 text-xs sm:text-sm">₹{calcDetails.netAnnualPremium.toLocaleString('en-IN')}/yr</span>
+
+                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                              <span className="text-[10px] text-slate-400 block font-medium">Net Annual Total:</span>
+                              <span className="font-extrabold text-emerald-400 text-xs sm:text-sm">₹{calcDetails.netAnnualPremium.toLocaleString('en-IN')}</span>
                             </div>
                           </div>
 
-                          {/* Itemized Loadings and Discounts Badges if present */}
+                          {/* Itemized Loadings and Discounts Lists */}
                           {((calcDetails.loadings && calcDetails.loadings.length > 0) || (calcDetails.discounts && calcDetails.discounts.length > 0)) && (
-                            <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-800/80">
-                              {calcDetails.loadings?.map((l, idx) => (
-                                <span key={`l-${idx}`} className="bg-rose-950/80 text-rose-300 text-[10px] font-semibold px-2 py-0.5 rounded border border-rose-800/60">
-                                  +{l.amount.toLocaleString('en-IN')} ({l.name})
-                                </span>
-                              ))}
-                              {calcDetails.discounts?.map((d, idx) => (
-                                <span key={`d-${idx}`} className="bg-emerald-950/80 text-emerald-300 text-[10px] font-semibold px-2 py-0.5 rounded border border-emerald-800/60">
-                                  -{d.amount.toLocaleString('en-IN')} ({d.name})
-                                </span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+                              {/* Loadings */}
+                              {calcDetails.loadings && calcDetails.loadings.length > 0 && (
+                                <div className="space-y-1">
+                                  <span className="text-[10px] font-extrabold text-rose-400 uppercase tracking-wider block">Risk Loadings Itemized:</span>
+                                  {calcDetails.loadings.map((l, idx) => (
+                                    <div key={idx} className="flex items-center justify-between text-[11px] bg-slate-900/60 px-2 py-1 rounded">
+                                      <span className="text-slate-300">{l.name}</span>
+                                      <span className="font-bold text-rose-400">+₹{l.amount.toLocaleString('en-IN')}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Discounts */}
+                              {calcDetails.discounts && calcDetails.discounts.length > 0 && (
+                                <div className="space-y-1">
+                                  <span className="text-[10px] font-extrabold text-emerald-400 uppercase tracking-wider block">Discounts Itemized:</span>
+                                  {calcDetails.discounts.map((d, idx) => (
+                                    <div key={idx} className="flex items-center justify-between text-[11px] bg-slate-900/60 px-2 py-1 rounded">
+                                      <span className="text-slate-300">{d.name}</span>
+                                      <span className="font-bold text-emerald-400">-₹{d.amount.toLocaleString('en-IN')}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Underwriting Notices */}
+                          {calcDetails.warnings && calcDetails.warnings.length > 0 && (
+                            <div className="bg-amber-950/60 border border-amber-500/40 p-2.5 rounded-xl text-amber-200 text-[11px] space-y-1">
+                              {calcDetails.warnings.map((w, idx) => (
+                                <p key={idx} className="font-semibold">⚠️ {w}</p>
                               ))}
                             </div>
                           )}
+
                         </div>
                       )}
 
