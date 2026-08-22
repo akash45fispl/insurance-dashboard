@@ -10,6 +10,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   resetPassword: (email: string) => Promise<{ success: boolean; message: string }>;
   switchRole: (role: Role) => void;
@@ -149,6 +150,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: typeof window !== 'undefined' ? window.location.href : undefined,
+          },
+        });
+        if (error) return { success: false, error: error.message };
+        return { success: true };
+      }
+
+      // Demo / fallback Google Sign-In
+      const googleUser: User = {
+        id: `usr_google_${Date.now()}`,
+        email: 'advisor.google@fortuneinvestment.in',
+        name: 'Google Advisor',
+        role: 'advisor',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+      };
+      setUser(googleUser);
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(googleUser));
+      saveUser(googleUser);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Google authentication failed' };
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
@@ -181,6 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         loading,
         login,
+        loginWithGoogle,
         logout,
         resetPassword,
         switchRole,
