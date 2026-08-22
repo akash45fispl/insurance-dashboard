@@ -20,12 +20,13 @@ import {
   Check,
   Zap,
   Star,
+  Calculator,
   UserCheck
 } from 'lucide-react';
 
 interface NavbarProps {
-  activeView: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings' | 'users';
-  setActiveView: (view: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings' | 'users') => void;
+  activeView: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings' | 'users' | 'calculator';
+  setActiveView: (view: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings' | 'users' | 'calculator') => void;
   compareCount: number;
   isDarkMode?: boolean;
   onToggleDarkMode?: () => void;
@@ -57,7 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   if (!user) return null;
 
   interface NavItem {
-    id: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings' | 'users';
+    id: 'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'settings' | 'users' | 'calculator';
     label: string;
     icon: React.ElementType;
     desc: string;
@@ -68,6 +69,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const navItems: NavItem[] = [
     { id: 'dashboard', label: 'Scheme Library (Home)', icon: ShieldCheck, desc: 'Flagship policies across top IRDAI insurers', color: 'from-blue-500 to-indigo-600' },
+    { id: 'calculator', label: '10-Insurer Health Calculator', icon: Calculator, tag: 'New', desc: 'Instant side-by-side rating engine for 10 Indian insurers', color: 'from-teal-500 to-emerald-600' },
     { id: 'proposals', label: 'Client Proposals', icon: FileText, desc: 'Create, track and export custom proposals', color: 'from-emerald-500 to-teal-600' },
     { id: 'compare', label: 'Compare Schemes', icon: Scale, badge: compareCount > 0 ? compareCount : undefined, desc: 'Side-by-side spec matrix & cappings', color: 'from-purple-500 to-indigo-600' },
     { id: 'analytics', label: 'Analytics Overview', icon: BarChart3, desc: 'Conversion metrics & portfolio volumes', color: 'from-cyan-500 to-blue-600' },

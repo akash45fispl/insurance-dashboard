@@ -16,6 +16,7 @@ import { EditSchemeModal } from '@/components/EditSchemeModal';
 import { SchemePremiumCalculator } from '@/components/SchemePremiumCalculator';
 import { SchemeSettingsView } from '@/components/SchemeSettingsView';
 import { UserManagementView } from '@/components/UserManagementView';
+import { IndianHealthCalculator } from '@/components/IndianHealthCalculator';
 import { Scheme, Proposal, AnalyticsMetrics, ProposalStatus, CalculatedPremiumDetails, User, UserStatus } from '@/lib/types';
 import { 
   getSchemes, 
@@ -31,7 +32,7 @@ import {
   updateProposalStatus, 
   deleteProposal 
 } from '@/lib/data-service';
-import { ShieldCheck, Plus, Sparkles, Scale, Layers } from 'lucide-react';
+import { ShieldCheck, Plus, Sparkles, Scale, Layers, Calculator } from 'lucide-react';
 
 export default function HomePage() {
   const { user, loading, isAdmin } = useAuth();
@@ -43,7 +44,7 @@ export default function HomePage() {
   const [usersList, setUsersList] = useState<User[]>([]);
 
   // Active View mode
-  const [activeView, setActiveView] = useState<'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'detail' | 'proposal_doc' | 'settings' | 'users'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'library' | 'proposals' | 'compare' | 'analytics' | 'reports' | 'detail' | 'proposal_doc' | 'settings' | 'users' | 'calculator'>('dashboard');
 
   // Selected entities for deep view
   const [selectedScheme, setSelectedScheme] = useState<Scheme | null>(null);
@@ -375,7 +376,15 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex flex-wrap items-center gap-3 shrink-0">
+                  <button
+                    onClick={() => setActiveView('calculator')}
+                    className="px-5 py-3 bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-teal-500/30 flex items-center gap-2 transition-all transform hover:-translate-y-0.5 border border-teal-400/30"
+                  >
+                    <Calculator className="w-4 h-4" />
+                    <span>10-Insurer Health Calculator</span>
+                  </button>
+
                   <button
                     onClick={() => {
                       setPreSelectedSchemeForProp(null);
@@ -410,7 +419,16 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* VIEW 2: CLIENT PROPOSALS */}
+        {/* VIEW 2: 10-INSURER INDIAN HEALTH CALCULATOR */}
+        {activeView === 'calculator' && (
+          <div className="animate-in fade-in duration-200">
+            <IndianHealthCalculator
+              onBackToDashboard={() => setActiveView('dashboard')}
+            />
+          </div>
+        )}
+
+        {/* VIEW 3: CLIENT PROPOSALS */}
         {activeView === 'proposals' && (
           <div className="animate-in fade-in duration-200">
             <ClientProposals
@@ -427,7 +445,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* VIEW 3: ADVISOR REPORTS */}
+        {/* VIEW 4: ADVISOR REPORTS */}
         {activeView === 'reports' && (
           <div className="animate-in fade-in duration-200">
             <AdvisorReportsView
@@ -437,7 +455,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* VIEW 4: COMPARE SCHEMES */}
+        {/* VIEW 5: COMPARE SCHEMES */}
         {activeView === 'compare' && (
           <div className="animate-in fade-in duration-200">
             <SchemeComparison
@@ -455,14 +473,14 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* VIEW 5: ANALYTICS OVERVIEW */}
+        {/* VIEW 6: ANALYTICS OVERVIEW */}
         {activeView === 'analytics' && analytics && (
           <div className="animate-in fade-in duration-200">
             <AnalyticsOverview metrics={analytics} />
           </div>
         )}
 
-        {/* VIEW 6: SCHEME SETTINGS */}
+        {/* VIEW 7: SCHEME SETTINGS */}
         {activeView === 'settings' && (
           <div className="animate-in fade-in duration-200">
             <SchemeSettingsView
@@ -476,7 +494,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* VIEW 7: USER MANAGEMENT */}
+        {/* VIEW 8: USER MANAGEMENT */}
         {activeView === 'users' && (
           <div className="animate-in fade-in duration-200">
             <UserManagementView

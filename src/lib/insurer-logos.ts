@@ -62,6 +62,24 @@ export const INSURER_LOGO_PRESETS: InsurerLogoPreset[] = [
     bgGradient: 'from-rose-600 to-red-800',
     logoSvg: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="20" fill="%23D32F2F"/><path d="M25 30L50 70L75 30H62L50 50L38 30H25Z" fill="white"/><circle cx="50" cy="22" r="5" fill="%23FFD54F"/></svg>`,
   },
+  {
+    name: 'Aditya Birla Health',
+    insurerKeywords: ['aditya', 'birla', 'aditya birla'],
+    bgGradient: 'from-rose-700 to-red-900',
+    logoSvg: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="20" fill="%23A81C1C"/><path d="M50 20L80 75H20L50 20Z" fill="%23E53935"/><path d="M50 35L70 75H30L50 35Z" fill="white"/><circle cx="50" cy="60" r="8" fill="%23FFB300"/></svg>`,
+  },
+  {
+    name: 'Manipal Cigna',
+    insurerKeywords: ['manipal', 'cigna', 'manipal cigna'],
+    bgGradient: 'from-purple-600 to-indigo-800',
+    logoSvg: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="20" fill="%235E2CED"/><circle cx="50" cy="45" r="22" fill="%2300C853"/><path d="M40 45L48 53L62 37" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M25 75C35 68 65 68 75 75" stroke="white" stroke-width="6" stroke-linecap="round"/></svg>`,
+  },
+  {
+    name: 'New India Assurance',
+    insurerKeywords: ['new india', 'nia', 'new india assurance'],
+    bgGradient: 'from-blue-900 to-slate-900',
+    logoSvg: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="20" fill="%23002B49"/><circle cx="50" cy="50" r="30" stroke="white" stroke-width="8"/><circle cx="50" cy="50" r="14" fill="%23FF9933"/><path d="M50 20V32M50 68V80M20 50H32M68 50H80" stroke="white" stroke-width="4"/></svg>`,
+  },
 ];
 
 export function getInsurerLogoUrl(insurerName: string, customLogoUrl?: string): string {
