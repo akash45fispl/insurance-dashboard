@@ -37,7 +37,7 @@ export const SEED_SCHEMES: Scheme[] = [
       restoration: '100% Unlimited',
       waitingPED: '36 Months',
       csr: '90.2%',
-      premium: 'Est. ₹14,000/yr (5L floater)',
+      premium: 'Est. ₹12,159/yr (₹1,013/mo)',
     },
     inclusions: [
       'In-patient hospitalisation & ICU room rent without sub-limits',
@@ -102,7 +102,7 @@ export const SEED_SCHEMES: Scheme[] = [
       restoration: '100% Instant',
       waitingPED: '36 Months (Option: 24m)',
       csr: '98.4%',
-      premium: 'Est. ₹16,500/yr (5L floater)',
+      premium: 'Est. ₹14,532/yr (₹1,211/mo)',
     },
     inclusions: [
       'Secure Benefit: Instantly doubles base cover on day 1 (₹5L policy becomes ₹10L cover).',

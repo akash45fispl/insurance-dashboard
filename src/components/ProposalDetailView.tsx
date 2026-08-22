@@ -1,7 +1,6 @@
-'use client';
-
 import React from 'react';
 import { Proposal, Scheme } from '@/lib/types';
+import { calculateAllInsurerQuotes, getZoneFromCityOrPincode, formatINR } from '@/lib/health-rating-engine';
 import { 
   ArrowLeft, 
   Printer, 
@@ -49,6 +48,112 @@ export const ProposalDetailView: React.FC<ProposalDetailViewProps> = ({
     acc[s.category].push(s);
     return acc;
   }, {} as Record<string, Scheme[]>);
+
+  // Helper to retrieve or calculate exact rating details for a scheme
+  const getCalculatedDetailsForScheme = React.useCallback((s: Scheme) => {
+    if (proposal.schemeCalculations && proposal.schemeCalculations[s.id]) {
+      return proposal.schemeCalculations[s.id];
+    }
+    
+    if (proposal.schemeCalculations) {
+      const matchKey = Object.keys(proposal.schemeCalculations).find((k) =>
+        k.toLowerCase().includes(s.id.toLowerCase()) ||
+        s.id.toLowerCase().includes(k.toLowerCase()) ||
+        s.insurer.toLowerCase().includes(k.toLowerCase())
+      );
+      if (matchKey && proposal.schemeCalculations[matchKey]) {
+        return proposal.schemeCalculations[matchKey];
+      }
+    }
+
+    // Dynamic rating calculation fallback based on client profile
+    if (s.category === 'health') {
+      const age = proposal.client.age || 35;
+      const city = proposal.client.city || 'Mumbai';
+      const zone = getZoneFromCityOrPincode(city, '');
+      const membersList = proposal.client.members && proposal.client.members.length > 0
+        ? proposal.client.members.map((m, i) => ({
+            id: String(i),
+            relationship: (m.relation || 'Self') as any,
+            age: m.age || age,
+            gender: 'Male' as any
+          }))
+        : [
+            { id: '1', relationship: 'Self' as any, age: age, gender: 'Male' as any },
+            { id: '2', relationship: 'Spouse' as any, age: Math.max(18, age - 2), gender: 'Female' as any }
+          ];
+
+      const quotes = calculateAllInsurerQuotes({
+        members: membersList,
+        city: city,
+        pincode: '400001',
+        zone: zone,
+        sumInsured: 1000000,
+        policyType: 'Floater',
+        tenureYears: 1,
+        preExistingConditions: [],
+        isSmoker: false,
+        alcohol: 'None',
+        heightCm: 172,
+        weightKg: 68,
+        occupationRisk: 'Low',
+        addOns: ['RoomRentWaiver'],
+        deductibleCopay: 'None',
+        activeLifestyleRebate: false
+      });
+
+      const quote = quotes.find((q) =>
+        s.insurer.toLowerCase().includes(q.insurerName.toLowerCase().split(' ')[0])
+      ) || quotes[0];
+
+      if (quote) {
+        return {
+          basePremium: quote.basePremium,
+          riderPremium: quote.loadings.reduce((sum, l) => sum + l.amount, 0),
+          subtotal: quote.grossPremium,
+          tenureDiscount: quote.discounts.reduce((sum, d) => sum + d.amount, 0),
+          taxGst: quote.gstAmount,
+          netAnnualPremium: quote.finalAnnualPremium,
+          monthlyEmi: quote.monthlyEquivalent,
+          parameters: {
+            sumInsuredAmount: 1000000,
+            primaryAge: age,
+            policyType: 'Floater' as any,
+            tenureYears: 1 as any,
+            selectedRiders: ['RoomRentWaiver'],
+            zone: zone,
+            city: city,
+            preExistingConditions: [],
+            isSmoker: false,
+            alcohol: 'None',
+            bmi: 23,
+            occupationRisk: 'Low',
+            deductibleCopay: 'None',
+          },
+          loadings: quote.loadings,
+          discounts: quote.discounts,
+          breakdownFormula: quote.breakdownFormula,
+          insurerName: quote.insurerName,
+          planName: quote.planName,
+          warnings: quote.warnings || [],
+        };
+      }
+    }
+    return null;
+  }, [proposal]);
+
+  // Consolidated Total Premium
+  const calculatedTotalPremium = React.useMemo(() => {
+    if (selectedSchemes.length === 0) return proposal.totalPremium || 0;
+    let sum = 0;
+    selectedSchemes.forEach((s) => {
+      const calc = getCalculatedDetailsForScheme(s);
+      if (calc) {
+        sum += calc.netAnnualPremium;
+      }
+    });
+    return sum > 0 ? sum : (proposal.totalPremium || 0);
+  }, [selectedSchemes, proposal, getCalculatedDetailsForScheme]);
 
   // PDF Export via html2canvas & print trigger
   const handleExportPDF = async () => {
@@ -241,6 +346,7 @@ export const ProposalDetailView: React.FC<ProposalDetailViewProps> = ({
                 <tbody className="divide-y divide-slate-100 bg-slate-50/50">
                   {selectedSchemes.map((s) => {
                     const logoUrl = getInsurerLogoUrl(s.insurer, s.logoUrl);
+                    const calcDetails = getCalculatedDetailsForScheme(s);
                     return (
                       <tr key={s.id}>
                         <td className="p-3 font-bold uppercase text-slate-700">{s.category}</td>
@@ -257,11 +363,15 @@ export const ProposalDetailView: React.FC<ProposalDetailViewProps> = ({
                             </div>
                           </div>
                         </td>
-                        <td className="p-3 font-bold text-slate-800">{s.sumInsured}</td>
+                        <td className="p-3 font-bold text-slate-800">
+                          {calcDetails 
+                            ? `₹${calcDetails.parameters.sumInsuredAmount >= 10000000 ? '1 Crore' : `${calcDetails.parameters.sumInsuredAmount / 100000} Lakhs`}`
+                            : s.sumInsured}
+                        </td>
                         <td className="p-3 text-slate-600">{s.restoration}</td>
                         <td className="p-3 font-bold text-blue-700">
-                          {proposal.schemeCalculations && proposal.schemeCalculations[s.id]
-                            ? `₹${proposal.schemeCalculations[s.id].netAnnualPremium.toLocaleString('en-IN')}/yr`
+                          {calcDetails
+                            ? `Est. ₹${calcDetails.netAnnualPremium.toLocaleString('en-IN')}/yr (₹${calcDetails.monthlyEmi.toLocaleString('en-IN')}/mo)`
                             : s.financials.premium}
                         </td>
                       </tr>
@@ -292,7 +402,7 @@ export const ProposalDetailView: React.FC<ProposalDetailViewProps> = ({
               <div className="space-y-6">
                 {schemes.map((s) => {
                   const logoUrl = getInsurerLogoUrl(s.insurer, s.logoUrl);
-                  const calcDetails = proposal.schemeCalculations ? proposal.schemeCalculations[s.id] : undefined;
+                  const calcDetails = getCalculatedDetailsForScheme(s);
 
                   return (
                     <div key={s.id} className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
@@ -319,7 +429,11 @@ export const ProposalDetailView: React.FC<ProposalDetailViewProps> = ({
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl text-xs">
                         <div>
                           <span className="text-[10px] text-slate-400 font-medium block">Sum Insured</span>
-                          <span className="font-bold text-slate-800">{s.sumInsured}</span>
+                          <span className="font-bold text-slate-800">
+                            {calcDetails 
+                              ? `₹${calcDetails.parameters.sumInsuredAmount >= 10000000 ? '1 Crore' : `${calcDetails.parameters.sumInsuredAmount / 100000} Lakhs`}`
+                              : s.sumInsured}
+                          </span>
                         </div>
                         <div>
                           <span className="text-[10px] text-slate-400 font-medium block">Network Hospitals</span>
@@ -330,8 +444,12 @@ export const ProposalDetailView: React.FC<ProposalDetailViewProps> = ({
                           <span className="font-bold text-blue-600">{s.restoration}</span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-400 font-medium block">PED Waiting</span>
-                          <span className="font-bold text-slate-800">{s.waitingPED}</span>
+                          <span className="text-[10px] text-slate-400 font-medium block">Est. Premium</span>
+                          <span className="font-bold text-emerald-700">
+                            {calcDetails 
+                              ? `₹${calcDetails.netAnnualPremium.toLocaleString('en-IN')}/yr (₹${calcDetails.monthlyEmi.toLocaleString('en-IN')}/mo)`
+                              : s.financials.premium}
+                          </span>
                         </div>
                       </div>
 
@@ -539,14 +657,14 @@ export const ProposalDetailView: React.FC<ProposalDetailViewProps> = ({
                 <div>
                   <span className="text-xs text-slate-400 font-semibold block uppercase">Total Annual Premium</span>
                   <div className="text-3xl font-extrabold text-emerald-400 mt-1">
-                    ₹{(proposal.totalPremium || 45000).toLocaleString('en-IN')}
+                    ₹{calculatedTotalPremium.toLocaleString('en-IN')}
                   </div>
                   <span className="text-[10px] text-slate-400 block mt-1">Includes applicable GST (18%) & Regulatory stamp duty</span>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-700 flex items-center justify-between text-[11px]">
                   <span className="text-slate-400">Monthly EMI Option:</span>
-                  <span className="font-bold text-blue-300">Est. ₹{Math.round((proposal.totalPremium || 45000) / 12).toLocaleString('en-IN')}/mo</span>
+                  <span className="font-bold text-blue-300">Est. ₹{Math.round(calculatedTotalPremium / 12).toLocaleString('en-IN')}/mo</span>
                 </div>
               </div>
             </div>
