@@ -64,6 +64,12 @@ export interface CalculatedPremiumDetails {
   netAnnualPremium: number;
   monthlyEmi: number;
   parameters: PremiumCalculatorParams;
+  loadings?: { name: string; percentage?: number; amount: number; description: string }[];
+  discounts?: { name: string; percentage?: number; amount: number; description: string }[];
+  breakdownFormula?: string;
+  insurerId?: string;
+  insurerName?: string;
+  planName?: string;
 }
 
 export interface Scheme {

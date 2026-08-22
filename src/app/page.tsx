@@ -17,6 +17,7 @@ import { SchemePremiumCalculator } from '@/components/SchemePremiumCalculator';
 import { SchemeSettingsView } from '@/components/SchemeSettingsView';
 import { UserManagementView } from '@/components/UserManagementView';
 import { IndianHealthCalculator } from '@/components/IndianHealthCalculator';
+import { InsurerQuote, UserProfile } from '@/lib/health-rating-engine';
 import { Scheme, Proposal, AnalyticsMetrics, ProposalStatus, CalculatedPremiumDetails, User, UserStatus } from '@/lib/types';
 import { 
   getSchemes, 
@@ -56,6 +57,8 @@ export default function HomePage() {
   // Proposal Creation Modal state
   const [proposalModalOpen, setProposalModalOpen] = useState(false);
   const [preSelectedSchemeForProp, setPreSelectedSchemeForProp] = useState<Scheme | null>(null);
+  const [calcQuotesForProposal, setCalcQuotesForProposal] = useState<InsurerQuote[]>([]);
+  const [calcProfileForProposal, setCalcProfileForProposal] = useState<UserProfile | null>(null);
 
   // Admin Scheme Edit / Create Modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -424,6 +427,12 @@ export default function HomePage() {
           <div className="animate-in fade-in duration-200">
             <IndianHealthCalculator
               onBackToDashboard={() => setActiveView('dashboard')}
+              onCreateProposal={(selectedQuotes, profile) => {
+                setCalcQuotesForProposal(selectedQuotes);
+                setCalcProfileForProposal(profile);
+                setPreSelectedSchemeForProp(null);
+                setProposalModalOpen(true);
+              }}
             />
           </div>
         )}
@@ -436,6 +445,8 @@ export default function HomePage() {
               onViewProposal={handleViewProposalDoc}
               onCreateNewProposal={() => {
                 setPreSelectedSchemeForProp(null);
+                setCalcQuotesForProposal([]);
+                setCalcProfileForProposal(null);
                 setProposalModalOpen(true);
               }}
               onUpdateStatus={handleUpdateStatus}
@@ -467,6 +478,8 @@ export default function HomePage() {
               onAddIdToCompare={handleToggleCompare}
               onCreateProposalFromCompare={() => {
                 setPreSelectedSchemeForProp(null);
+                setCalcQuotesForProposal([]);
+                setCalcProfileForProposal(null);
                 setProposalModalOpen(true);
               }}
             />
@@ -529,10 +542,16 @@ export default function HomePage() {
       <NewProposalModal
         schemes={schemes}
         isOpen={proposalModalOpen}
-        onClose={() => setProposalModalOpen(false)}
+        onClose={() => {
+          setProposalModalOpen(false);
+          setCalcQuotesForProposal([]);
+          setCalcProfileForProposal(null);
+        }}
         onSaveProposal={handleSaveProposal}
         preSelectedScheme={preSelectedSchemeForProp}
         initialCompareIds={compareIds}
+        calculatorQuotes={calcQuotesForProposal}
+        calculatorProfile={calcProfileForProposal}
       />
 
       {/* Admin Scheme Edit / Add Modal */}

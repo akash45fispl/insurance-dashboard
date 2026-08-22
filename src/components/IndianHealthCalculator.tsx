@@ -53,9 +53,13 @@ import {
 
 interface IndianHealthCalculatorProps {
   onBackToDashboard?: () => void;
+  onCreateProposal?: (selectedQuotes: InsurerQuote[], profile: UserProfile) => void;
 }
 
-export const IndianHealthCalculator: React.FC<IndianHealthCalculatorProps> = ({ onBackToDashboard }) => {
+export const IndianHealthCalculator: React.FC<IndianHealthCalculatorProps> = ({ 
+  onBackToDashboard,
+  onCreateProposal 
+}) => {
 
   // Default User Profile State
   const [members, setMembers] = useState<InsuredMember[]>([
@@ -89,6 +93,12 @@ export const IndianHealthCalculator: React.FC<IndianHealthCalculatorProps> = ({ 
 
   // Sorting Control State
   const [sortBy, setSortBy] = useState<'lowest' | 'highest' | 'name' | 'base'>('lowest');
+
+  // Multi-Select Quote State for Proposal Creation
+  const [selectedQuoteIds, setSelectedQuoteIds] = useState<string[]>([
+    'star-health', 'niva-bupa', 'care-health', 'hdfc-ergo', 'icici-lombard',
+    'bajaj-allianz', 'tata-aig', 'aditya-birla', 'manipal-cigna', 'new-india-assurance'
+  ]);
 
   // Derived Zone
   const computedZone = useMemo(() => {
@@ -196,6 +206,34 @@ export const IndianHealthCalculator: React.FC<IndianHealthCalculatorProps> = ({ 
 
   const handleUpdateMember = (id: string, field: keyof InsuredMember, value: any) => {
     setMembers(members.map(m => m.id === id ? { ...m, [field]: value } : m));
+  };
+
+  // Quote Selection Handlers
+  const toggleQuoteSelection = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (selectedQuoteIds.includes(id)) {
+      setSelectedQuoteIds(selectedQuoteIds.filter((qId) => qId !== id));
+    } else {
+      setSelectedQuoteIds([...selectedQuoteIds, id]);
+    }
+  };
+
+  const handleToggleSelectAllQuotes = () => {
+    if (selectedQuoteIds.length === allQuotes.length) {
+      setSelectedQuoteIds([]);
+    } else {
+      setSelectedQuoteIds(allQuotes.map((q) => q.insurerId));
+    }
+  };
+
+  const handleCreateProposalClick = () => {
+    if (!onCreateProposal) return;
+    const selectedQuotes = allQuotes.filter((q) => selectedQuoteIds.includes(q.insurerId));
+    if (selectedQuotes.length === 0) {
+      alert('Please select at least 1 insurer quote to create a proposal.');
+      return;
+    }
+    onCreateProposal(selectedQuotes, currentProfile);
   };
 
   const toggleCondition = (condition: string) => {
@@ -909,19 +947,32 @@ export const IndianHealthCalculator: React.FC<IndianHealthCalculatorProps> = ({ 
             </p>
           </div>
 
-          {/* Sorting Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500">Sort By:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 rounded-xl p-2 focus:ring-2 focus:ring-teal-500"
-            >
-              <option value="lowest">Lowest Final Premium</option>
-              <option value="highest">Highest Final Premium</option>
-              <option value="name">Insurer Name (A-Z)</option>
-              <option value="base">Base Premium Rate</option>
-            </select>
+          {/* Proposal Action & Sorting Controls */}
+          <div className="flex flex-wrap items-center gap-3">
+            {onCreateProposal && (
+              <button
+                type="button"
+                onClick={handleCreateProposalClick}
+                className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs rounded-xl shadow-md flex items-center gap-2 transition-all transform hover:-translate-y-0.5 border border-emerald-400/30"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Create Proposal with Selected ({selectedQuoteIds.length})</span>
+              </button>
+            )}
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-500">Sort By:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 rounded-xl p-2 focus:ring-2 focus:ring-teal-500"
+              >
+                <option value="lowest">Lowest Final Premium</option>
+                <option value="highest">Highest Final Premium</option>
+                <option value="name">Insurer Name (A-Z)</option>
+                <option value="base">Base Premium Rate</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -930,7 +981,16 @@ export const IndianHealthCalculator: React.FC<IndianHealthCalculatorProps> = ({ 
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-extrabold uppercase text-[10px] tracking-wider bg-slate-50/50 dark:bg-slate-800/30">
-                <th className="p-4 rounded-l-xl">Insurer & Plan Variant</th>
+                <th className="p-4 w-10 text-center rounded-l-xl">
+                  <input
+                    type="checkbox"
+                    checked={selectedQuoteIds.length === allQuotes.length && allQuotes.length > 0}
+                    onChange={handleToggleSelectAllQuotes}
+                    className="rounded text-teal-600 focus:ring-0 cursor-pointer"
+                    title="Select All Insurers for Proposal"
+                  />
+                </th>
+                <th className="p-4">Insurer & Plan Variant</th>
                 <th className="p-4">Base Premium</th>
                 <th className="p-4">Loadings Applied</th>
                 <th className="p-4">Discounts Applied</th>
@@ -944,6 +1004,7 @@ export const IndianHealthCalculator: React.FC<IndianHealthCalculatorProps> = ({ 
                 const isExpanded = expandedInsurerId === q.insurerId;
                 const isLowest = q.insurerId === lowestQuote.insurerId;
                 const isHighest = q.insurerId === highestQuote.insurerId;
+                const isSelected = selectedQuoteIds.includes(q.insurerId);
 
                 return (
                   <React.Fragment key={q.insurerId}>
@@ -952,8 +1013,17 @@ export const IndianHealthCalculator: React.FC<IndianHealthCalculatorProps> = ({ 
                       onClick={() => setExpandedInsurerId(isExpanded ? null : q.insurerId)}
                       className={`cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/50 ${
                         isExpanded ? 'bg-teal-50/40 dark:bg-teal-950/20' : ''
-                      }`}
+                      } ${isSelected ? '' : 'opacity-60'}`}
                     >
+                      {/* Selection Checkbox */}
+                      <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => toggleQuoteSelection(q.insurerId, e as any)}
+                          className="rounded text-teal-600 focus:ring-0 cursor-pointer w-4 h-4"
+                        />
+                      </td>
                       {/* Insurer Name & Plan */}
                       <td className="p-4">
                         <div className="flex items-center gap-3">
@@ -1041,7 +1111,7 @@ export const IndianHealthCalculator: React.FC<IndianHealthCalculatorProps> = ({ 
                     {/* EXPANDABLE ACCORDION DETAIL ROW */}
                     {isExpanded && (
                       <tr>
-                        <td colSpan={6} className="p-0 bg-slate-900 text-slate-100">
+                        <td colSpan={7} className="p-0 bg-slate-900 text-slate-100">
                           <div className="p-6 space-y-4 animate-in fade-in duration-200 border-y border-slate-800">
                             
                             {/* Equation Banner */}

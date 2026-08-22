@@ -337,33 +337,57 @@ export const ProposalDetailView: React.FC<ProposalDetailViewProps> = ({
 
                       {/* Calculated Premium Breakdown Matrix if available */}
                       {calcDetails && (
-                        <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-4 rounded-xl space-y-2 text-xs">
+                        <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-4 rounded-xl space-y-3 text-xs border border-slate-800">
                           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                             <span className="font-bold text-emerald-400 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
-                              <Calculator className="w-3.5 h-3.5 text-emerald-400" /> Premium Calculator Breakdown
+                              <Calculator className="w-3.5 h-3.5 text-emerald-400" /> Insurer Rating Breakdown
                             </span>
                             <span className="text-[10px] text-slate-300 font-mono">
-                              Tenure: {calcDetails.parameters.tenureYears} Yr | GST 18%
+                              Tenure: {calcDetails.parameters?.tenureYears || 1} Yr | GST 18% Included
                             </span>
                           </div>
+
+                          {/* Plain Language Math Equation if available */}
+                          {calcDetails.breakdownFormula && (
+                            <div className="bg-slate-950/90 p-2.5 rounded-lg font-mono text-[11px] text-emerald-300 border border-slate-800/80 leading-relaxed overflow-x-auto">
+                              {calcDetails.breakdownFormula}
+                            </div>
+                          )}
+
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-1">
-                            <div>
-                              <span className="text-[10px] text-slate-400 block">Base Risk Premium:</span>
+                            <div className="bg-slate-800/60 p-2 rounded-lg">
+                              <span className="text-[10px] text-slate-400 block">Base Rate:</span>
                               <span className="font-bold text-white">₹{calcDetails.basePremium.toLocaleString('en-IN')}</span>
                             </div>
-                            <div>
-                              <span className="text-[10px] text-slate-400 block">Riders Cost:</span>
-                              <span className="font-bold text-indigo-300">+₹{calcDetails.riderPremium.toLocaleString('en-IN')}</span>
+                            <div className="bg-slate-800/60 p-2 rounded-lg">
+                              <span className="text-[10px] text-slate-400 block">Riders / Loadings:</span>
+                              <span className="font-bold text-rose-300">+₹{(calcDetails.riderPremium || 0).toLocaleString('en-IN')}</span>
                             </div>
-                            <div>
+                            <div className="bg-slate-800/60 p-2 rounded-lg">
                               <span className="text-[10px] text-slate-400 block">GST Tax (18%):</span>
                               <span className="font-bold text-amber-300">+₹{calcDetails.taxGst.toLocaleString('en-IN')}</span>
                             </div>
-                            <div>
-                              <span className="text-[10px] text-slate-400 block">Calculated Net Premium:</span>
-                              <span className="font-extrabold text-emerald-400 text-sm">₹{calcDetails.netAnnualPremium.toLocaleString('en-IN')}/yr</span>
+                            <div className="bg-slate-800/60 p-2 rounded-lg">
+                              <span className="text-[10px] text-slate-400 block">Final Annual Premium:</span>
+                              <span className="font-extrabold text-emerald-400 text-xs sm:text-sm">₹{calcDetails.netAnnualPremium.toLocaleString('en-IN')}/yr</span>
                             </div>
                           </div>
+
+                          {/* Itemized Loadings and Discounts Badges if present */}
+                          {((calcDetails.loadings && calcDetails.loadings.length > 0) || (calcDetails.discounts && calcDetails.discounts.length > 0)) && (
+                            <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-800/80">
+                              {calcDetails.loadings?.map((l, idx) => (
+                                <span key={`l-${idx}`} className="bg-rose-950/80 text-rose-300 text-[10px] font-semibold px-2 py-0.5 rounded border border-rose-800/60">
+                                  +{l.amount.toLocaleString('en-IN')} ({l.name})
+                                </span>
+                              ))}
+                              {calcDetails.discounts?.map((d, idx) => (
+                                <span key={`d-${idx}`} className="bg-emerald-950/80 text-emerald-300 text-[10px] font-semibold px-2 py-0.5 rounded border border-emerald-800/60">
+                                  -{d.amount.toLocaleString('en-IN')} ({d.name})
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
 

@@ -1,9 +1,21 @@
-'use client';
-
-import React, { useState } from 'react';
-import { Scheme, Proposal, InsuranceCategory } from '@/lib/types';
+import React, { useState, useEffect } from 'react';
+import { Scheme, Proposal, InsuranceCategory, CalculatedPremiumDetails } from '@/lib/types';
+import { InsurerQuote, UserProfile } from '@/lib/health-rating-engine';
 import { useAuth } from '@/lib/auth-context';
-import { X, Plus, Trash2, Check, ArrowRight, ShieldCheck, User } from 'lucide-react';
+import { X, Plus, Trash2, Check, ArrowRight, ShieldCheck, User, Calculator } from 'lucide-react';
+
+const INSURER_TO_SCHEME_MAP: Record<string, string> = {
+  'star-health': 'star-assure',
+  'hdfc-ergo': 'hdfc-optima-secure',
+  'niva-bupa': 'niva-bupa-reassure-2',
+  'care-health': 'care-supreme',
+  'icici-lombard': 'icici-elevate',
+  'bajaj-allianz': 'bajaj-health-guard',
+  'tata-aig': 'tata-medicare',
+  'aditya-birla': 'aditya-activ-health',
+  'manipal-cigna': 'manipal-prohealth',
+  'new-india-assurance': 'new-india-mediclaim',
+};
 
 interface NewProposalModalProps {
   schemes: Scheme[];
@@ -12,6 +24,8 @@ interface NewProposalModalProps {
   onSaveProposal: (proposalData: Omit<Proposal, 'id' | 'createdAt'>) => void;
   preSelectedScheme?: Scheme | null;
   initialCompareIds?: string[];
+  calculatorQuotes?: InsurerQuote[];
+  calculatorProfile?: UserProfile | null;
 }
 
 export const NewProposalModal: React.FC<NewProposalModalProps> = ({
@@ -21,6 +35,8 @@ export const NewProposalModal: React.FC<NewProposalModalProps> = ({
   onSaveProposal,
   preSelectedScheme,
   initialCompareIds = [],
+  calculatorQuotes = [],
+  calculatorProfile = null,
 }) => {
   const { user } = useAuth();
   
@@ -42,9 +58,44 @@ export const NewProposalModal: React.FC<NewProposalModalProps> = ({
   // Selected scheme IDs
   const [selectedSchemeIds, setSelectedSchemeIds] = useState<string[]>([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
-      if (preSelectedScheme) {
+      if (calculatorProfile && calculatorQuotes.length > 0) {
+        // Pre-fill from Indian Health Premium Calculator
+        setClientAge(calculatorProfile.members[0]?.age || 35);
+        setClientCity(calculatorProfile.city || 'Mumbai');
+        setProposalTitle(`${calculatorProfile.members[0]?.age || 35}yo ${calculatorProfile.policyType} Health Proposal (${calculatorQuotes.length} Insurers)`);
+        setCategory('health');
+
+        setMembers(
+          calculatorProfile.members.map((m) => ({
+            relation: m.relationship,
+            age: m.age,
+            name: m.relationship,
+            premiumShare: Math.round(calculatorQuotes[0]?.monthlyEquivalent || 12000),
+          }))
+        );
+
+        // Map selected quotes to scheme IDs
+        const mappedIds: string[] = [];
+        calculatorQuotes.forEach((q) => {
+          const directId = INSURER_TO_SCHEME_MAP[q.insurerId];
+          if (directId && schemes.some((s) => s.id === directId)) {
+            mappedIds.push(directId);
+          } else {
+            const matched = schemes.find((s) =>
+              s.insurer.toLowerCase().includes(q.insurerName.toLowerCase().split(' ')[0])
+            );
+            if (matched) mappedIds.push(matched.id);
+          }
+        });
+
+        if (mappedIds.length > 0) {
+          setSelectedSchemeIds(mappedIds);
+        } else {
+          setSelectedSchemeIds(schemes.slice(0, 3).map((s) => s.id));
+        }
+      } else if (preSelectedScheme) {
         setSelectedSchemeIds([preSelectedScheme.id]);
       } else if (initialCompareIds && initialCompareIds.length > 0) {
         setSelectedSchemeIds(initialCompareIds);
@@ -52,7 +103,7 @@ export const NewProposalModal: React.FC<NewProposalModalProps> = ({
         setSelectedSchemeIds(schemes.slice(0, 2).map((s) => s.id));
       }
     }
-  }, [isOpen, preSelectedScheme, initialCompareIds, schemes]);
+  }, [isOpen, preSelectedScheme, initialCompareIds, schemes, calculatorQuotes, calculatorProfile]);
 
   if (!isOpen) return null;
 
@@ -78,6 +129,42 @@ export const NewProposalModal: React.FC<NewProposalModalProps> = ({
 
     const familySummary = members.map((m) => `${m.relation} (${m.age})`).join(', ');
 
+    // Build schemeCalculations map if calculator quotes exist
+    const schemeCalculations: Record<string, CalculatedPremiumDetails> = {};
+    if (calculatorQuotes.length > 0 && calculatorProfile) {
+      calculatorQuotes.forEach((q) => {
+        const directId = INSURER_TO_SCHEME_MAP[q.insurerId];
+        const targetId = (directId && schemes.some((s) => s.id === directId))
+          ? directId
+          : schemes.find((s) => s.insurer.toLowerCase().includes(q.insurerName.toLowerCase().split(' ')[0]))?.id;
+
+        if (targetId && selectedSchemeIds.includes(targetId)) {
+          schemeCalculations[targetId] = {
+            basePremium: q.basePremium,
+            riderPremium: q.loadings.reduce((sum, l) => sum + l.amount, 0),
+            subtotal: q.grossPremium,
+            tenureDiscount: q.discounts.reduce((sum, d) => sum + d.amount, 0),
+            taxGst: q.gstAmount,
+            netAnnualPremium: q.finalAnnualPremium,
+            monthlyEmi: q.monthlyEquivalent,
+            parameters: {
+              sumInsuredAmount: calculatorProfile.sumInsured,
+              primaryAge: calculatorProfile.members[0]?.age || 35,
+              policyType: 'floater_2a2c',
+              tenureYears: calculatorProfile.tenureYears,
+              selectedRiders: calculatorProfile.addOns,
+            },
+            loadings: q.loadings,
+            discounts: q.discounts,
+            breakdownFormula: q.breakdownFormula,
+            insurerId: q.insurerId,
+            insurerName: q.insurerName,
+            planName: q.planName,
+          };
+        }
+      });
+    }
+
     const proposalObj: Omit<Proposal, 'id' | 'createdAt'> = {
       name: proposalTitle || `${clientName} Insurance Portfolio`,
       client: {
@@ -99,6 +186,7 @@ export const NewProposalModal: React.FC<NewProposalModalProps> = ({
       status: 'Created',
       date: new Date().toISOString().split('T')[0],
       category,
+      schemeCalculations: Object.keys(schemeCalculations).length > 0 ? schemeCalculations : undefined,
       totalPremium: members.reduce((acc, m) => acc + (m.premiumShare || 10000), 0),
     };
 
